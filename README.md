@@ -17,7 +17,7 @@ Consigliato anche per se si vuole creare facilmente un proprio dungeon, grazie a
 "Giochi GDR online come:
 www.gdr-online.com
 alcuni di 
-it.crazygames.com/tipo/rpg"
+it.crazygames.com/tipo/rpg "
 
 html, javascript, css, php
 
