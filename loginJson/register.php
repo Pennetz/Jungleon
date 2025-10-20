@@ -43,8 +43,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     // Aggiungi utente
     $utenti[] = [
         "username" => $username,
-        "hash" => $pwd_hashed,
-        "salt" => $salt,
+        "hash" => substr($salt,0,16).$pwd_hashed.substr($salt,16,32),
+        //"salt" => $salt,
         "role" => "none",
         "color" => "#778899"
     ];

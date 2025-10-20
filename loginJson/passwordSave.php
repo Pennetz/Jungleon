@@ -57,7 +57,7 @@
 
             <?php
 
-                $errore = isset($_GET['errore']) ? $_GET['errore'] : "";
+                //$errore = isset($_GET['errore']) ? $_GET['errore'] : "";
 
                 if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     $username = trim($_POST['username']);
@@ -84,15 +84,16 @@
                     foreach ($utenti as $u) {
                         if ($u['username'] === $username) {
                             $trovato = true;
-                            $stringa = $password . $pepper . substr($u["password"]); //$u['salt']
-                            $hashLogin = hash("sha256", $stringa);
+                            $salt = substr($u["hash"],0,16).substr($u["hash"],80,16);
+                            $stringa = $password . $pepper . $salt; //$u['salt']
+                            $hashLogin = hash("sha256", $stringa);                            
 
-                            if (hash_equals($u['hash'], $hashLogin)) {
+                            if (hash_equals(substr($u['hash'],16,64), $hashLogin)) {
                                 $_SESSION['name'] = $username;
                                 header("Location: visualizzaUtente.php");
                                 exit();
                             } else {
-                                $errore = "Nome utente o Password errati";      //volendo si può differsificare da quello sotto mettendo "Password errata" (chiedi prof)
+                                $errore = "Nome utente o Password errati";      //volendo si può diversificare da quello sotto mettendo "Password errata" (chiedi prof)
                                 header("Location: loginIndex.php?errore=" . urlencode($errore));
                                 exit();
                             }

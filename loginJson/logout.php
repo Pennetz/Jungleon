@@ -5,6 +5,6 @@
     unset($_SESSION["color"]);
     session_destroy();
     
-    header("location:./index.php");
+    header("location:./loginIndex.php");
     exit();
 ?>

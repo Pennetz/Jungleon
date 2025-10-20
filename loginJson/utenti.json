@@ -1,23 +1,20 @@
 [
     {
-        "username": "admin",
-        "hash": "6c5c3b0258140afcaad6d493ea2245d3fcd0eea3d14c271ae3b03a622e0f3613",
-        "salt": "354b7648dc89338087209283ed1dcab9",
+        "username": "Admin",
+        "hash": "2dff5976e84e0d22faf73ea94e4ec7e9558a6514f5aa028938343afd68824636c109327be0d84b50767e4ed2b400bc9a",
         "role": "admin",
-        "color": "#A52A2A"
+        "color": "#eae439"
     },
     {
-        "username": "Pasquale",
-        "hash": "bbae24c214d2dbe506f8984f61b743cb2d5de6f34554ff667f13ba6d1becc842",
-        "salt": "debbf352789f8700b0e51f13254b0900",
-        "role": "none",
-        "color": "#ec6409"
+        "username": "admin",
+        "hash": "067d9f0d4d28d076339661df98d6052db960f70358f5706e0f03260c43f4564af5f6b4d0c31a9578ea99e1bcdd24f9ba",
+        "role": "admin",
+        "color": "#8c5a5a"
     },
     {
-        "username": "Fabibbo",
-        "hash": "c8a9769d2c48f27fe85fc1a63a1b1cdccacdcad3097c71d160261db23a79c873",
-        "salt": "fd48d4e7d7d2f200d23d958d8bfc52ba",
+        "username": "pasquale",
+        "hash": "f9330107e252f520f4c9764bf2eadef8dde8cdf0e2972a9437a3e3d350149e3ec17531821e5642a2e57b3f2cd7b98194",
         "role": "none",
-        "color": "#f90192"
+        "color": "#fd5812"
     }
 ]

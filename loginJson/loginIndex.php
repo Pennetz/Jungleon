@@ -9,7 +9,7 @@
 <!doctype html>
 <html lang="it">
     <head>
-        <title>Informatica Form HTML</title>
+        <title>Informatica loginJson</title>
         <!-- Required meta tags -->
         <meta charset="utf-8" />
         <meta
@@ -71,7 +71,7 @@
 
                     <hr>
                     
-                    <input id="btnRegistra" type="submit" class="btn btn-primary" value="Accedi">
+                    <input type="submit" class="btn btn-primary" value="Accedi">
                      oppure 
                     <a href="index.php" type="button" class="btn btn-primary">Registrati</a>
                 </form>
