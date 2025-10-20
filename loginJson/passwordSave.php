@@ -13,7 +13,7 @@
 <!doctype html>
 <html lang="it">
     <head>
-        <title>Informatica Form HTML</title>
+        <title>Informatica loginJson</title>
         <!-- Required meta tags -->
         <meta charset="utf-8" />
         <meta
