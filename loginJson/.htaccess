@@ -1,0 +1,4 @@
+<Files "utenti.js">  
+  Order Allow,Deny
+  Deny from all
+</Files>

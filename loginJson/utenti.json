@@ -1,0 +1,23 @@
+[
+    {
+        "username": "admin",
+        "hash": "6c5c3b0258140afcaad6d493ea2245d3fcd0eea3d14c271ae3b03a622e0f3613",
+        "salt": "354b7648dc89338087209283ed1dcab9",
+        "role": "admin",
+        "color": "#A52A2A"
+    },
+    {
+        "username": "Pasquale",
+        "hash": "bbae24c214d2dbe506f8984f61b743cb2d5de6f34554ff667f13ba6d1becc842",
+        "salt": "debbf352789f8700b0e51f13254b0900",
+        "role": "none",
+        "color": "#ec6409"
+    },
+    {
+        "username": "Fabibbo",
+        "hash": "c8a9769d2c48f27fe85fc1a63a1b1cdccacdcad3097c71d160261db23a79c873",
+        "salt": "fd48d4e7d7d2f200d23d958d8bfc52ba",
+        "role": "none",
+        "color": "#f90192"
+    }
+]
