@@ -8,7 +8,7 @@ Competi poi online con le ricompense trovate nel dungeon o crea la tua partita p
 È inoltre possibile creare dungeon personalizzati, aggiungendo stanze, nemici, personaggi o/e oggetti personalizzati. Questi dungeon possono essere pubblicati in modo tale che altri giocatori dal mondo possano giocarci.
 (Per la modalità 1Vs1 vengono conteggiati solo gli oggetti raccolti durante la partita ""Singolo giocatore"", tutti gli oggetti ed i livelli acquisiti durante le partite personalizzate non vengono considerati)."
 
-[Jungleon-descrizione.pdf](https://github.com/user-attachments/files/22997307/Jungleon-descrizione.pdf)
+[Documento con descrizione completa](https://docs.google.com/document/d/1Wnl9z4raB4nXzBMIiYCX1I2BUumF-2ufz1TnbKATa5o/edit?usp=sharing)
 
 
 "Coloro che vogliono giocare ad un GDR, dove ogni avventura è diversa grazie alla generazione procedurale, dando allo stesso tempo la possibilità di giocare l’avventura con i propri amici, competere con ciò che si è trovato nella propria partita privata e salvare e continuare la propria partita quando si vuole dove si vuole.
