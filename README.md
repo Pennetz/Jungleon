@@ -15,9 +15,9 @@ Coloro che vogliono giocare ad un GDR, dove ogni avventura è diversa grazie all
 Consigliato anche per se si vuole creare facilmente un proprio dungeon, grazie alla modalità sandbox.
 
 Giochi GDR online come:
-www.gdr-online.com
+[www.gdr-online.com](http://www.gdr-online.com/)
 alcuni di 
-it.crazygames.com/tipo/rpg
+[it.crazygames.com/tipo/rpg](https://it.crazygames.com/tipo/rpg)
 
 html, javascript, css, php
 
