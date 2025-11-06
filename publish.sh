@@ -17,7 +17,7 @@ fi
 
 # Controllo argomenti
 if [ "$#" -ne 2 ]; then
-  echo "Uso: $0 <nome_link> <cartella_riferimento>"
+  echo "Funziona così: $0 <nome_link> <cartella_riferimento>"
   exit 1
 fi
 
