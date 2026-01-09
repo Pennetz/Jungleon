@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>JWT</title>
+    </head>
+    <body>
+
+        <h1>Ciao studente --> DOCENTE ed ESAME</h1>
+
+        <h3>SERVIZIO DOCENTE</h3>
+        <form id="docente" method="POST" action="./docente.php">
+            <input type="text" name="nome" placeholder="nome"/>
+            <input type="text" name="cognome" placeholder="cognome"/>
+            <select name="classe" placeholder="classe" >
+                <option value="1ID">1ID</option>
+                <option value="2ID">2ID</option>
+                <option value="3ID">3ID</option>
+                <option value="4ID">4ID</option>
+                <option value="5ID">5ID</option>
+            </select>
+            <input type="submit" />
+        </form>
+
+        <h3>SERVIZIO ESAME</h3>
+        <form id="esame" method="POST" action="./esame.php">
+            <input type="text" name="token" placeholder="token"/>
+            <input type="submit" />
+        </form>
+       
+
+    </body>
+</html>
