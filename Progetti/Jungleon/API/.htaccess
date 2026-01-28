@@ -1,0 +1,5 @@
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteBase /Progetti/Jungleon/API/
+RewriteRule ^(.*)$ api.php
+</IfModule>
