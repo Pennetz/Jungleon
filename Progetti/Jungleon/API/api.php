@@ -38,91 +38,91 @@ function documentazione(){
         <h3 class="alert alert-warning">Crea nuovo ruolo</h3>
         <div class="jumbotron">
             method : POST <br/>
-            endpoint : https://scaling-potato-7v7q7wx7rrwqhx6wq-80.app.github.dev/Progetti/Jungleon/API/Ruolo <br/>                                             <!-- da implementare -->
+            endpoint : https://crispy-space-invention-7v7q7wx7r7xrfx66w-80.app.github.dev/Progetti/Jungleon/API/Ruolo <br/>                                             <!-- da implementare -->
             returned data: Nome Ruolo 
         </div>
 
         <h3 class="alert alert-success">Registrazione utente</h3>
         <div class="jumbotron">
             method : POST <br/>
-            endpoint : https://scaling-potato-7v7q7wx7rrwqhx6wq-80.app.github.dev/Progetti/Jungleon/API/Register <br/>                                    <!-- da implementare -->
+            endpoint : https://crispy-space-invention-7v7q7wx7r7xrfx66w-80.app.github.dev/Progetti/Jungleon/API/Register <br/>                                    <!-- da implementare -->
             returned data: stato (True), ID utente 
         </div>
 
         <h3 class="alert alert-success">Login</h3>
         <div class="jumbotron">
-            method : GET <br/>
-            endpoint : https://scaling-potato-7v7q7wx7rrwqhx6wq-80.app.github.dev/Progetti/Jungleon/API/Login <br/>                                    <!-- da implementare -->
+            method : POST <br/>
+            endpoint : https://crispy-space-invention-7v7q7wx7r7xrfx66w-80.app.github.dev/Progetti/Jungleon/API/Login <br/>                                    <!-- da implementare -->
             returned data: JWT token, scadenza token 
         </div>
 
         <h3 class="alert alert-secondary">Join to new game</h3>
         <div class="jumbotron">
             method : POST <br/>
-            endpoint : https://scaling-potato-7v7q7wx7rrwqhx6wq-80.app.github.dev/Progetti/Jungleon/API/??? <br/>                                             <!-- da implementare -->
+            endpoint : https://crispy-space-invention-7v7q7wx7r7xrfx66w-80.app.github.dev/Progetti/Jungleon/API/??? <br/>                                             <!-- da implementare -->
             returned data: game's ID 
         </div>
 
         <h3 class="alert alert-secondary">Insert your move</h3>
         <div class="jumbotron">
             method : POST <br/>
-            endpoint : https://scaling-potato-7v7q7wx7rrwqhx6wq-80.app.github.dev/Progetti/Jungleon/API/??? <br/>                                             <!-- da implementare -->
+            endpoint : https://crispy-space-invention-7v7q7wx7r7xrfx66w-80.app.github.dev/Progetti/Jungleon/API/??? <br/>                                             <!-- da implementare -->
             returned data: move's ID 
         </div>
 
         <h3 class="alert alert-success">Ruoli esistenti</h3>
         <div class="jumbotron">
             method : GET <br/>
-            endpoint : https://scaling-potato-7v7q7wx7rrwqhx6wq-80.app.github.dev/Progetti/Jungleon/API/Ruoli <br/>                                    <!-- da implementare -->
+            endpoint : https://crispy-space-invention-7v7q7wx7r7xrfx66w-80.app.github.dev/Progetti/Jungleon/API/Ruoli <br/>                                    <!-- da implementare -->
             returned data: Ruoli LIST 
         </div>
         
         <h3 class="alert alert-success">Ruolo per Nome</h3>
         <div class="jumbotron">
             method : GET <br/>
-            endpoint : https://scaling-potato-7v7q7wx7rrwqhx6wq-80.app.github.dev/Progetti/Jungleon/API/Ruolo/{NomeRuolo(string)} <br/>                                             <!-- da implementare -->
+            endpoint : https://crispy-space-invention-7v7q7wx7r7xrfx66w-80.app.github.dev/Progetti/Jungleon/API/Ruolo/{NomeRuolo(string)} <br/>                                             <!-- da implementare -->
             returned data: Ruoli LIST(1)  
         </div>
 		
         <h3 class="alert alert-success">Dungeons pubblici</h3>
         <div class="jumbotron">
             method : GET <br/>
-            endpoint : https://scaling-potato-7v7q7wx7rrwqhx6wq-80.app.github.dev/Progetti/Jungleon/API/Dungeons <br/>                                             <!-- da implementare -->
+            endpoint : https://crispy-space-invention-7v7q7wx7r7xrfx66w-80.app.github.dev/Progetti/Jungleon/API/Dungeons <br/>                                             <!-- da implementare -->
             returned data: Dungeons LIST(45)  
         </div>
 
         <h3 class="alert alert-success">Dungeons pubblici per pagina</h3>
         <div class="jumbotron">
             method : GET <br/>
-            endpoint : https://scaling-potato-7v7q7wx7rrwqhx6wq-80.app.github.dev/Progetti/Jungleon/API/Dungeons/{pagina(int)} <br/>                                             <!-- da implementare -->
+            endpoint : https://crispy-space-invention-7v7q7wx7r7xrfx66w-80.app.github.dev/Progetti/Jungleon/API/Dungeons/{pagina(int)} <br/>                                             <!-- da implementare -->
             returned data: Dungeons LIST(45)  
         </div>
 
         <h3 class="alert alert-success">Dungeon per ID</h3>
         <div class="jumbotron">
             method : GET <br/>
-            endpoint : https://scaling-potato-7v7q7wx7rrwqhx6wq-80.app.github.dev/Progetti/Jungleon/API/Dungeons/{ID(int)} <br/>                                             <!-- da implementare -->
+            endpoint : https://crispy-space-invention-7v7q7wx7r7xrfx66w-80.app.github.dev/Progetti/Jungleon/API/Dungeons/{ID(int)} <br/>                                             <!-- da implementare -->
             returned data: Dungeons LIST(1)  
         </div>
 
         <h3 class="alert alert-warning">Dungeons per Filtro</h3>
         <div class="jumbotron">
             method : GET <br/>
-            endpoint : https://scaling-potato-7v7q7wx7rrwqhx6wq-80.app.github.dev/Progetti/Jungleon/API/DungeonsFiltrati/{filtro} <br/>                                             <!-- da implementare -->
+            endpoint : https://crispy-space-invention-7v7q7wx7r7xrfx66w-80.app.github.dev/Progetti/Jungleon/API/DungeonsFiltrati/{filtro} <br/>                                             <!-- da implementare -->
             returned data: Dungeons LIST  
         </div>
 
         <h3 class="alert alert-secondary">Last move</h3>
         <div class="jumbotron">
             method : GET <br/>
-            endpoint : https://scaling-potato-7v7q7wx7rrwqhx6wq-80.app.github.dev/Progetti/Jungleon/API/??? <br/>                                             <!-- da implementare -->
+            endpoint : https://crispy-space-invention-7v7q7wx7r7xrfx66w-80.app.github.dev/Progetti/Jungleon/API/??? <br/>                                             <!-- da implementare -->
             returned data: last move 
         </div>
 
 		<h3 class="alert alert-secondary">Game's Moves</h3>
         <div class="jumbotron">
             method : GET <br/>
-            endpoint : https://scaling-potato-7v7q7wx7rrwqhx6wq-80.app.github.dev/Progetti/Jungleon/API/??? <br/>                                             <!-- da implementare -->
+            endpoint : https://crispy-space-invention-7v7q7wx7r7xrfx66w-80.app.github.dev/Progetti/Jungleon/API/??? <br/>                                             <!-- da implementare -->
             returned data: moves's LIST 
         </div>
 		
@@ -153,7 +153,7 @@ function documentazione(){
 define('JWT_SECRET', '214d74fe2533889e5be398e25905a7cc8c9d1ecdc1b2a42888a6de50269d9051');   // cambia con una tua chiave
 define('JWT_ISSUER', 'https://jungleon.local');
 define('JWT_AUDIENCE', 'https://jungleon.client');
-define('JWT_EXP', 300); // 5 minuti
+define('JWT_EXP', 64800); // 1 giorno
 
 /* ------------------------ FUNZIONI GENERICHE ------------------------ */
 
@@ -235,14 +235,14 @@ function registra_utente_db($db, $username, $email, $nome, $password, $ruolo = '
         $stmt = $db->prepare("INSERT INTO Utenti (Username, Nome, Password, Ruolo) VALUES (?, ?, ?, ?)");
         $stmt->bind_param("ssss", $username, $nome, $password_finale, $ruolo);
     } else {
-        $stmt = $db->prepare("INSERT INTO Utenti (Username, Email, Nome, Password, Ruolo) VALUES (?, ?, ?, ?, ?)");
-        $stmt->bind_param("sssss", $username, $email, $nome, $password_finale, $ruolo);
+        $stmt = $db->prepare("INSERT INTO Utenti (Username, Email, Nome, Password) VALUES (?, ?, ?, ?)");
+        $stmt->bind_param("ssss", $username, $email, $nome, $password_finale);
     }
     //var_dump($stmt);
-    print("1\n");
+    //print("1\n");
     $success = $stmt->execute();
     //var_dump($success);
-    print("2\n");
+    //print("2\n");
 
     if (!$success) {
         $stmt = $db->prepare("DELETE FROM Utenti WHERE Username=?");
@@ -251,22 +251,39 @@ function registra_utente_db($db, $username, $email, $nome, $password, $ruolo = '
         http_response_code(500);
         die(json_encode(["error" => "Errore durante la registrazione"]));
     } else {
-        print("3\n");
-        $stmt = $db->prepare("SELECT ID FROM Utenti WHERE Username=?");
+
+        $stmt = $db->prepare("INSERT INTO `Ruoli_Utenti` (`ID`, `Utente`, `Ruolo`) VALUES (NULL, ?, 'UtenteBase');");
         $stmt->bind_param("s", $username);
-        $stmt->execute();
-        print("4\n");
+        //print("3\n");
+        $success = $stmt->execute();
+        if ($success) {
+          return login_utente_db($db, $username, $password);
+        }
+        /*
+        $stmt = $db->prepare("SELECT Username FROM Utenti WHERE Username=?");
+        $stmt->bind_param("s", $username);
+        $success = $stmt->execute();
+        if(!$success) {
+            http_response_code(500);
+            die(json_encode(["error" => "Errore durante la registrazione"]));
+        }
+        //print("4\n");
         $result = $stmt->get_result();
         $user = $result->fetch_assoc();
-        print("5\n");
-    }
+        if ($user["Username"] == $username) {
+            return ["success" => true, "Username" => $user["Username"]];
 
-    print("6\n");
-    return ["success" => true, "ID" => $user["ID"]];
+        } else {
+            http_response_code(500);
+            die(json_encode(["error" => "Errore durante la registrazione"]));
+
+        }*/
+        //print("5\n");
+    }
 }
 
 function login_utente_db($db, $username, $password){
-    $stmt = $db->prepare("SELECT ID, Username, Password, Ruolo FROM Utenti WHERE Username=?");
+    $stmt = $db->prepare("SELECT Username, Password, Ruolo FROM Utenti WHERE Username=?");
     $stmt->bind_param("s", $username);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -279,11 +296,11 @@ function login_utente_db($db, $username, $password){
 
     $password_db = $user['Password'];
     $salt = substr($password_db, 0, 32);
-    $hash_salvato = substr($password_db, 32);
+    $hash_db = substr($password_db, 32);
 
     $hash_calcolato = calcola_hash_password($password, $salt);
 
-    if (!hash_equals($hash_salvato, $hash_calcolato)) {
+    if (!hash_equals($hash_db, $hash_calcolato)) {
         http_response_code(401);
         die(json_encode(["error" => "Credenziali non valide"]));
     }
@@ -292,7 +309,7 @@ function login_utente_db($db, $username, $password){
     $payload = [
         "iat" => time(),
         "exp" => time() + JWT_EXP,
-        "sub" => $user["ID"],
+        "sub" => $user["Username"],
         "username" => $user["Username"],
         "ruolo" => $user["Ruolo"]
     ];
@@ -313,7 +330,7 @@ function login_utente_db($db, $username, $password){
 
     );*/
 
-    return ["success" => true, "token" => $token, "expires_in" => JWT_EXP];
+    return ["success" => true, "token" => $token, "expires_in" => JWT_EXP, "username" => $user["Username"]];
 }
 
 
@@ -337,7 +354,7 @@ function ruolo_db($db,$nome){
 }
 
 function dungeons_db($db, $pagina){
-  #$cancella=$db->query("delete from games_partite WHERE PLAYER2 IS NULL AND CREATED_AT < NOW() - INTERVAL 1 DAY	");
+  //$cancella=$db->query("delete from games_partite WHERE PLAYER2 IS NULL AND CREATED_AT < NOW() - INTERVAL 1 DAY	");
   $pg1 = 1*$pagina;
   $pg2 = 1*($pagina-1);
   //print_r("PG1: $pg1 - PG2: $pg2\n");
@@ -537,6 +554,23 @@ function rispondi_json($data){
 }
 
 
+//menage bearer token JWT
+function verifica_token(){
+  if(isset($_SERVER["HTTP_AUTHORIZATION"]))
+  {
+      $token = trim(str_replace("Bearer", "", $_SERVER["HTTP_AUTHORIZATION"]));
+      try {
+          $decoded = JWT::decode($token, new Key(JWT_SECRET, 'HS256'));
+          // Token valido, procedi con la richiesta
+      } catch (Exception $e) {
+          errore(401, "Token non valido o scaduto "+ $e->getMessage());
+      }
+  } else {
+      // Nessun token fornito
+      errore(401, "Token mancante");
+  }
+}
+
 /* ------------------------ GESTIONE ROTTE ------------------------ */
 
 
@@ -567,21 +601,25 @@ else
 }*/
 
 // Allow same origin requests
-if (isset($_SERVER["HTTP_ORIGIN"]) && $_SERVER["HTTP_ORIGIN"]=="https://scaling-potato-7v7q7wx7rrwqhx6wq-80.app.github.dev")
-{
-    header("Access-Control-Allow-Origin: {https://scaling-potato-7v7q7wx7rrwqhx6wq-80.app.github.dev/}");
-    header("Access-Control-Allow-Credentials: true");
-    header("Access-Control-Max-Age: 6400");    // cache for 10 minutes
-}
-else
-{
-  die(documentazione());
-    //header("Access-Control-Allow-Origin: *");
-}
+// if (isset($_SERVER["HTTP_ORIGIN"]) /*&& $_SERVER["HTTP_ORIGIN"]=="https://crispy-space-invention-7v7q7wx7r7xrfx66w-80.app.github.dev"*/)
+// {
+//     header("Access-Control-Allow-Origin: {https://crispy-space-invention-7v7q7wx7r7xrfx66w-80.app.github.dev}");
+//     header("Access-Control-Allow-Credentials: true");
+//     header("Access-Control-Max-Age: 6400");    // cache for 10 minutes
+// }
+// else
+// {
+//   //echo("ciao");
+//   die(documentazione());
+//     //header("Access-Control-Allow-Origin: *");
+// }
 
-header("Access-Control-Allow-Credentials: true");
-header("Access-Control-Max-Age: 600");    // cache for 10 minutes
+// header("Access-Control-Allow-Credentials: true");
+// header("Access-Control-Max-Age: 600");    // cache for 10 minutes
 
+
+
+/*
 if($_SERVER["REQUEST_METHOD"] === "OPTIONS")
 {
   if (isset($_SERVER["HTTP_ACCESS_CONTROL_REQUEST_METHOD"]))
@@ -592,45 +630,40 @@ if($_SERVER["REQUEST_METHOD"] === "OPTIONS")
 
   //Just exit with 200 OK with the above headers for OPTIONS method
   exit(0);
-}
+}*/
+
+
+
 //From here, handle the request as it is ok
    
 //header("Access-Control-Allow-Credentials: true");
 //header("Access-Control-Allow-Headers: X-Requested-With, Content-Type, Origin, Cache-Control, Pragma, Authorization, Accept, Accept-Encoding");
 //header("Access-Control-Allow-Methods: GET,POST, OPTIONS");
-header("Content-Type: application/json; charset= utf-8");
+//header("Content-Type: application/json; charset= utf-8");                                       !!!POTREBBE SERVIRE, QUINDI IN CASO DECOMMENTALO!!!
 $oggetto=null;
 
 if (gestisci_URI()[0]=="")
   die (documentazione());
 
-//menage bearer token JWT
-if(isset($_SERVER["HTTP_AUTHORIZATION"]))
-{
-    $token = trim(str_replace("Bearer", "", $_SERVER["HTTP_AUTHORIZATION"]));
-    try {
-        $decoded = JWT::decode($token, new Key(JWT_SECRET, 'HS256'));
-        // Token valido, procedi con la richiesta
-    } catch (Exception $e) {
-        errore(401, "Token non valido o scaduto "+ $e->getMessage());
-    }
+$parametri=gestisci_URI();
+if (is_null($parametri)){
+  documentazione();
 }
-if (!isset($_SERVER['PHP_AUTH_USER'])) {
-  header('WWW-Authenticate: Basic realm="Jungleon API"');
+
+
+/*if (!isset($_SERVER['PHP_AUTH_USER'])) {
+  header('WWW-Authenticate: bearer realm="Jungleon API"');
   header('HTTP/1.0 401 Unauthorized');
-  errore(401,"Basic Auth not sent");
+  errore(401,"bearer Auth required");                                           !!!CHIEDI AL PROFESSORE SE SERVE!!!
   exit;
 
-} else {
-  if ($_SERVER['PHP_AUTH_USER']!="Fire17Jungleon" && $_SERVER['PHP_AUTH_USER']!="4IE" 
+} else {*/
+  /*if ($_SERVER['PHP_AUTH_USER']!="Fire17Jungleon" && $_SERVER['PHP_AUTH_USER']!="4IE" 
   || $_SERVER['PHP_AUTH_PW']!="Jungleon17Stone" && $_SERVER['PHP_AUTH_PW']!="Falzone")
     errore(401,"Basic Auth error. Auth_user or password not valid");
-
-  else{
-    $parametri=gestisci_URI();
-    if (is_null($parametri)){
-      documentazione();
-    }
+  */
+  //else{
+    
       
     //rispondi_json($parametri);
     //die;
@@ -648,6 +681,8 @@ if (!isset($_SERVER['PHP_AUTH_USER'])) {
             }
             //registra l'utente (la mail è opzionale)
             $risposta = registra_utente_db(db_connect(), $data->username, $data->email ?? null, $data->nome, $data->password);
+            // imposto che la risposta è di tipo json di modo che nel client la possa interpretare correttamente
+            header("Content-Type: application/json; charset= utf-8");
             $oggetto=new risposta("POST","Registration completed",$risposta);
             break;
 
@@ -660,6 +695,7 @@ if (!isset($_SERVER['PHP_AUTH_USER'])) {
                 die(json_encode(["error" => "Username o password mancanti"]));
             }
             $jwt = login_utente_db(db_connect(), $data->username, $data->password);
+            header("Content-Type: application/json; charset= utf-8");
             $oggetto=new risposta("POST","Login completed",$jwt);
             break;
 
@@ -673,6 +709,7 @@ if (!isset($_SERVER['PHP_AUTH_USER'])) {
             switch($ruolo["nome"]){
               case "": 	errore(400,"Role name error");
             }
+            header("Content-Type: application/json; charset= utf-8");
             $oggetto=new risposta("POST","New Role created",$ruolo);
           }
           break;
@@ -687,6 +724,7 @@ if (!isset($_SERVER['PHP_AUTH_USER'])) {
             switch($partita["id"]){
               case -1: 	errore(400,"Player name error");
             }
+            header("Content-Type: application/json; charset= utf-8");
             $oggetto=new risposta("POST","New match created",$partita);
           }
           break;
@@ -766,6 +804,7 @@ if (!isset($_SERVER['PHP_AUTH_USER'])) {
           $ruoli=ruoli_db(db_connect());
           //for ($i=0;$i<10;$i++) $partita[]=rand(1,100);
           //elenco partite disponibili
+          header("Content-Type: application/json; charset= utf-8");
           $oggetto=new risposta("GET","ruoli esistenti",$ruoli);
           //var_dump($oggetto);
           break;
@@ -779,6 +818,7 @@ if (!isset($_SERVER['PHP_AUTH_USER'])) {
           $ruolo=ruolo_db(db_connect(),$nome);
           //for ($i=0;$i<10;$i++) $partita[]=rand(1,100);
           //elenco partite disponibili
+          header("Content-Type: application/json; charset= utf-8");
           $oggetto=new risposta("GET","Ruolo richiesto",$ruolo);
           //var_dump($oggetto);
           break;
@@ -791,6 +831,7 @@ if (!isset($_SERVER['PHP_AUTH_USER'])) {
           }
           $dungeons=array();
           $dungeons=dungeons_db(db_connect(), $pagina);
+          header("Content-Type: application/json; charset= utf-8");
           $oggetto=new risposta("GET","dungeons esistenti",$dungeons);
           //var_dump($oggetto);
           break;
@@ -802,6 +843,7 @@ if (!isset($_SERVER['PHP_AUTH_USER'])) {
           $ID=$parametri[1];
           $dungeon=array();
           $dungeon=dungeon_db(db_connect(),$ID);
+          header("Content-Type: application/json; charset= utf-8");
           $oggetto=new risposta("GET","Dungeon richiesto",$dungeon);
           //var_dump($oggetto);
           break;
@@ -812,6 +854,7 @@ if (!isset($_SERVER['PHP_AUTH_USER'])) {
             errore(400,"filtro richiesto");
           $filtro=$parametri[1];
           $dungeons=dungeonsFiltrati_db(db_connect(),$filtro);
+          header("Content-Type: application/json; charset= utf-8");
           $oggetto=new risposta("GET","dungeons filtrati",$dungeons);
           //var_dump($oggetto);
           break;
@@ -827,6 +870,6 @@ if (!isset($_SERVER['PHP_AUTH_USER'])) {
     array_push($parametri,$oggetto);
     rispondi_json($oggetto);
 
-	}
-}
+	//}
+//}
 ?>

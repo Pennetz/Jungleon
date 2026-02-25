@@ -25,7 +25,7 @@ session_start();
         <header>
             <!-- place navbar here -->
             <div class="container">
-                <ul class="nav nav-tabs">
+                <div class="nav nav-tabs">
                     <li class="nav-item">
                         <a class="nav-link" href="../index.php">Back to Home</a>
                     </li>
@@ -41,7 +41,7 @@ session_start();
                     <li class="nav-item">
                         <a class="nav-link active" aria-current="page" href="index.php">Jungleon</a>
                     </li>
-                </ul>
+                </div>
             </div>
             
         </header>
@@ -51,42 +51,50 @@ session_start();
             <?php
                 if (isset($_GET["errore"])){
             ?>
-                <h3 class="alert alert-danger"> <?php echo $_GET["errore"] ?> </h3>
-            <?php
-                } 
-            ?>
-
-
-            <div class="mt-5 mb-5 container">
-            <ul class="list-group">
-                <li class="list-group-item"><a href="./diagrammaER.html">Diagramma ER</a></li>
-                <li class="list-group-item"><a href="./diagrammaClassi.html">Diagramma delle classi</a></li>
-                <li class="list-group-item"><a href="./diagrammaCasiDuso.html">Diagramma casi d'uso</a></li>
-            <?php
-                if (isset($_SESSION['username'])) {
-                    
-                    header("location: VisualizzaUtente.php");
-
-                } else { //altrimenti visualizzo il bottone per andare alla pagina di login
-            ?>
-            <!-- creo un bottone spostato a destra per l'accesso -->
-            <div class="mt-3" style="text-align: right;">
-                <div>
-                    <h6>
-                        <a href="accedi.php" class="btn btn-primary">Accedi</a>
-                    </h6>
-                    <h6>
-                        Non hai un account? <a href="registrati.php">Registrati</a>
-                    </h6>
+                <div class="container">
+                    <h3 class="alert alert-danger"> <?php echo $_GET["errore"] ?> </h3>
                 </div>
-            </div>
-            <?php
-                } 
-            ?>
-            </ul>
-            </div>
+            <?php } ?>
 
+            <div class="mt-5 mb-4 container">
+                <!-- creo una "card" per il login -->
+                <h2>Login</h2>
+
+                <form action="login.php" method="post" class="mt-4">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username</label>
+                        <input
+                            type="text"
+                            class="form-control"
+                            id="username"
+                            name="username"
+                        />
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password</label>
+                        <input
+                            type="password"
+                            class="form-control"
+                            id="password"
+                            name="password"
+                        />
+                    </div>
+                    <h6>
+                        <button type="submit" class="btn btn-primary">Conferma</button> oppure
+                        <a href="registrati.php">Registrati</a>
+                    </h6>
+            </div>
             
+
+            <?php if(isset($_GET["errore"])){ ?>
+            <script>
+            	setTimeout(elimina, 3500);
+                function elimina(){
+                	document.getElementsByTagName("h3")[0].style.display="none";
+                }
+            </script>
+            <?php } ?>
+
 
         </main>
         <footer>

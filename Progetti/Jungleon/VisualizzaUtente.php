@@ -1,5 +1,9 @@
 <?php
 session_start();
+if (!isset($_SESSION['username'])) {
+    header("location: index.php");
+    exit();
+}
 ?>
 <!doctype html>
 <html lang="it">
@@ -25,9 +29,9 @@ session_start();
         <header>
             <!-- place navbar here -->
             <div class="container">
-                <ul class="nav nav-tabs">
+                <div class="nav nav-tabs">
                     <li class="nav-item">
-                        <a class="nav-link" href="../index.php">Back to Home</a>
+                        <a class="nav-link" href="index.php">Back to Home</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link " href="../Informatica.php">Informatica</a>
@@ -41,7 +45,7 @@ session_start();
                     <li class="nav-item">
                         <a class="nav-link active" aria-current="page" href="index.php">Jungleon</a>
                     </li>
-                </ul>
+                </div>
             </div>
             
         </header>
@@ -52,40 +56,33 @@ session_start();
                 if (isset($_GET["errore"])){
             ?>
                 <h3 class="alert alert-danger"> <?php echo $_GET["errore"] ?> </h3>
+
             <?php
-                } 
+                }
             ?>
 
 
-            <div class="mt-5 mb-5 container">
             <ul class="list-group">
                 <li class="list-group-item"><a href="./diagrammaER.html">Diagramma ER</a></li>
                 <li class="list-group-item"><a href="./diagrammaClassi.html">Diagramma delle classi</a></li>
                 <li class="list-group-item"><a href="./diagrammaCasiDuso.html">Diagramma casi d'uso</a></li>
+            </ul>
+
             <?php
-                if (isset($_SESSION['username'])) {
+                if (!isset($_SESSION['username'])) {
                     
                     header("location: VisualizzaUtente.php");
 
                 } else { //altrimenti visualizzo il bottone per andare alla pagina di login
             ?>
-            <!-- creo un bottone spostato a destra per l'accesso -->
-            <div class="mt-3" style="text-align: right;">
                 <div>
-                    <h6>
-                        <a href="accedi.php" class="btn btn-primary">Accedi</a>
-                    </h6>
-                    <h6>
-                        Non hai un account? <a href="registrati.php">Registrati</a>
-                    </h6>
+                    <h6>Non hai un account?</h6>
+                    <a href="register.php">Registrati</a>
+                    <a href="logout.php" class="btn btn-primary">Logout</a>
                 </div>
-            </div>
             <?php
                 } 
             ?>
-            </ul>
-            </div>
-
             
 
         </main>
