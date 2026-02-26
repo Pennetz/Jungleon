@@ -3,6 +3,7 @@
 header("content-type: application/json; charset= utf-8");
 die(json_encode($_SERVER));*/
 require __DIR__ . '/vendor/autoload.php';
+require __DIR__ . '/chiavi.php';
 
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
@@ -148,13 +149,6 @@ function documentazione(){
 
 }
 
-/* ------------------------ CONFIGURAZIONE ------------------------ */
-
-define('JWT_SECRET', '214d74fe2533889e5be398e25905a7cc8c9d1ecdc1b2a42888a6de50269d9051');   // cambia con una tua chiave
-define('JWT_ISSUER', 'https://jungleon.local');
-define('JWT_AUDIENCE', 'https://jungleon.client');
-define('JWT_EXP', 64800); // 1 giorno
-
 /* ------------------------ FUNZIONI GENERICHE ------------------------ */
 
 function gestisci_URI(){
@@ -175,7 +169,7 @@ function gestisci_URI(){
 }
 
 function db_connect(){
-    $db = new mysqli("localhost", "utente_phpmyadmin", "86FbuSRrfWRkgWh", "JungleonDB");
+    $db = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
     return $db;
 }
 
@@ -232,11 +226,11 @@ function registra_utente_db($db, $username, $email, $nome, $password, $ruolo = '
     $password_finale = $salt . $hash;
 
     if ($email == null) {
-        $stmt = $db->prepare("INSERT INTO Utenti (Username, Nome, Password, Ruolo) VALUES (?, ?, ?, ?)");
-        $stmt->bind_param("ssss", $username, $nome, $password_finale, $ruolo);
+      $stmt = $db->prepare("INSERT INTO Utenti (Username, Nome, Password) VALUES (?, ?, ?)");
+      $stmt->bind_param("sss", $username, $nome, $password_finale);
     } else {
-        $stmt = $db->prepare("INSERT INTO Utenti (Username, Email, Nome, Password) VALUES (?, ?, ?, ?)");
-        $stmt->bind_param("ssss", $username, $email, $nome, $password_finale);
+      $stmt = $db->prepare("INSERT INTO Utenti (Username, Email, Nome, Password) VALUES (?, ?, ?, ?)");
+      $stmt->bind_param("ssss", $username, $email, $nome, $password_finale);
     }
     //var_dump($stmt);
     //print("1\n");
@@ -252,12 +246,12 @@ function registra_utente_db($db, $username, $email, $nome, $password, $ruolo = '
         die(json_encode(["error" => "Errore durante la registrazione"]));
     } else {
 
-        $stmt = $db->prepare("INSERT INTO `Ruoli_Utenti` (`ID`, `Utente`, `Ruolo`) VALUES (NULL, ?, 'UtenteBase');");
-        $stmt->bind_param("s", $username);
+        $stmt = $db->prepare("INSERT INTO `Ruoli_Utenti` (`ID`, `Utente`, `Ruolo`) VALUES (NULL, ?, ?);");
+        $stmt->bind_param("ss", $username, $ruolo);
         //print("3\n");
         $success = $stmt->execute();
         if ($success) {
-          return login_utente_db($db, $username, $password);
+          return ["success" => true, "username" => $username];
         }
         /*
         $stmt = $db->prepare("SELECT Username FROM Utenti WHERE Username=?");
@@ -283,8 +277,13 @@ function registra_utente_db($db, $username, $email, $nome, $password, $ruolo = '
 }
 
 function login_utente_db($db, $username, $password){
-    $stmt = $db->prepare("SELECT Username, Password, Ruolo FROM Utenti WHERE Username=?");
-    $stmt->bind_param("s", $username);
+  $stmt = $db->prepare(
+    "SELECT Utenti.Username, Utenti.Password, Ruoli_Utenti.Ruolo " .
+    "FROM Utenti " .
+    "LEFT JOIN Ruoli_Utenti ON Ruoli_Utenti.Utente = Utenti.Username " .
+    "WHERE Utenti.Username=?"
+  );
+  $stmt->bind_param("s", $username);
     $stmt->execute();
     $result = $stmt->get_result();
     $user = $result->fetch_assoc();
@@ -307,11 +306,12 @@ function login_utente_db($db, $username, $password){
 
     // Genera JWT
     $payload = [
-        "iat" => time(),
-        "exp" => time() + JWT_EXP,
-        "sub" => $user["Username"],
-        "username" => $user["Username"],
-        "ruolo" => $user["Ruolo"]
+      "iat" => time(),
+      "nbf" => time(),
+      "exp" => time() + JWT_EXP,
+      "iss" => JWT_ISSUER,
+      "aud" => JWT_AUDIENCE,
+      "sub" => $user["Username"]
     ];
 
     $token = JWT::encode($payload, JWT_SECRET, 'HS256');
@@ -351,6 +351,61 @@ function ruolo_db($db,$nome){
   while($row = $result->fetch_assoc())
     $risp[]=$row;
   return $risp;
+}
+
+function ruolo_utente_db($db, $username){
+  if (!$username) {
+    return null;
+  }
+
+  $stmt = $db->prepare("SELECT Ruolo FROM Ruoli_Utenti WHERE Utente=? LIMIT 1");
+  if (!$stmt) {
+    return null;
+  }
+
+  $stmt->bind_param("s", $username);
+  $stmt->execute();
+  $result = $stmt->get_result();
+  $row = $result->fetch_assoc();
+  $stmt->close();
+
+  return $row["Ruolo"] ?? null;
+}
+
+function permessi_ruolo_db($db, $ruolo){
+  if (!$ruolo) {
+    return [];
+  }
+
+  $stmt = $db->prepare(
+    "SELECT Privilegi.Nome, Privilegi.Tipo, Privilegi.Descrizione " .
+    "FROM Privilegi " .
+    "INNER JOIN PrivilegiRuoli ON PrivilegiRuoli.Privilegio = Privilegi.Nome " .
+    "WHERE PrivilegiRuoli.Ruolo = ? " .
+    "ORDER BY Privilegi.Nome ASC"
+  );
+
+  if (!$stmt) {
+    return [];
+  }
+
+  $stmt->bind_param("s", $ruolo);
+  $stmt->execute();
+  $result = $stmt->get_result();
+
+  $permessi = [];
+  while ($row = $result->fetch_assoc()) {
+    if (isset($row["Nome"])) {
+      $permessi[] = [
+        "nome" => $row["Nome"],
+        "tipo" => $row["Tipo"] ?? null,
+        "descrizione" => $row["Descrizione"] ?? null
+      ];
+    }
+  }
+
+  $stmt->close();
+  return $permessi;
 }
 
 function dungeons_db($db, $pagina){
@@ -420,12 +475,35 @@ if (strpos(strtoupper($player), "GRANA")!==false)
 }
 
 function verifica_jwt() {
-    if (!isset($_SERVER['HTTP_AUTHORIZATION'])) {
+    // Prova a recuperare l'header Authorization in vari modi
+    $authHeader = null;
+    
+    // Metodo 1: $_SERVER
+    if (isset($_SERVER['HTTP_AUTHORIZATION'])) {
+        $authHeader = $_SERVER['HTTP_AUTHORIZATION'];
+    } elseif (isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
+        $authHeader = $_SERVER['REDIRECT_HTTP_AUTHORIZATION'];
+    }
+    
+    // Metodo 2: getallheaders() se disponibile
+    if (!$authHeader && function_exists('getallheaders')) {
+        $headers = getallheaders();
+        $authHeader = $headers['Authorization'] ?? $headers['authorization'] ?? null;
+    }
+    
+    // Metodo 3: apache_request_headers() se disponibile
+    if (!$authHeader && function_exists('apache_request_headers')) {
+        $headers = apache_request_headers();
+        $authHeader = $headers['Authorization'] ?? $headers['authorization'] ?? null;
+    }
+    
+    if (!$authHeader) {
+        error_log("verifica_jwt: Token mancante - Headers disponibili: " . json_encode($_SERVER));
         errore(401, "Token mancante");
     }
 
-    $authHeader = $_SERVER['HTTP_AUTHORIZATION'];
     if (!preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
+        error_log("verifica_jwt: Formato token non valido - Header: " . $authHeader);
         errore(401, "Formato token non valido");
     }
 
@@ -435,6 +513,7 @@ function verifica_jwt() {
         $decoded = JWT::decode($jwt, new Key(JWT_SECRET, 'HS256'));
         return $decoded; // contiene id utente, username, ecc.
     } catch (Exception $e) {
+        error_log("verifica_jwt: Errore decode - " . $e->getMessage());
         errore(401, "Token non valido o scaduto");
     }
 }
@@ -821,6 +900,39 @@ if (is_null($parametri)){
           header("Content-Type: application/json; charset= utf-8");
           $oggetto=new risposta("GET","Ruolo richiesto",$ruolo);
           //var_dump($oggetto);
+          break;
+
+        case "RuoloUtente":
+          $decoded = verifica_jwt();
+          $username = $decoded->username ?? $decoded->sub ?? null;
+          if (!$username) {
+            errore(400, "Username mancante nel token");
+          }
+
+          $ruoloUtente = ruolo_utente_db(db_connect(), $username);
+          if ($ruoloUtente === null) {
+            errore(404, "Ruolo utente non trovato");
+          }
+
+          header("Content-Type: application/json; charset= utf-8");
+          $oggetto=new risposta("GET","Ruolo utente", ["username" => $username, "ruolo" => $ruoloUtente]);
+          break;
+
+        case "PermessiUtente":
+          $decoded = verifica_jwt();
+          $username = $decoded->username ?? $decoded->sub ?? null;
+          if (!$username) {
+            errore(400, "Username mancante nel token");
+          }
+
+          $ruoloUtente = ruolo_utente_db(db_connect(), $username);
+          if ($ruoloUtente === null) {
+            errore(404, "Ruolo utente non trovato");
+          }
+
+          $permessi = permessi_ruolo_db(db_connect(), $ruoloUtente);
+          header("Content-Type: application/json; charset= utf-8");
+          $oggetto=new risposta("GET","Permessi utente", ["username" => $username, "ruolo" => $ruoloUtente, "permessi" => $permessi]);
           break;
 
         case "Dungeons":

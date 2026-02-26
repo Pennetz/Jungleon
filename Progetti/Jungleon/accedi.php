@@ -55,6 +55,14 @@ session_start();
                     <h3 class="alert alert-danger"> <?php echo $_GET["errore"] ?> </h3>
                 </div>
             <?php } ?>
+            
+            <?php
+                if (isset($_GET["messaggio"])){
+            ?>
+                <div class="container">
+                    <h3 class="alert alert-success"> <?php echo $_GET["messaggio"] ?> </h3>
+                </div>
+            <?php } ?>
 
             <div class="mt-5 mb-4 container">
                 <!-- creo una "card" per il login -->
@@ -68,6 +76,7 @@ session_start();
                             class="form-control"
                             id="username"
                             name="username"
+                            value="<?php echo htmlspecialchars($_GET['username'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
                         />
                     </div>
                     <div class="mb-3">
@@ -91,6 +100,16 @@ session_start();
             	setTimeout(elimina, 3500);
                 function elimina(){
                 	document.getElementsByTagName("h3")[0].style.display="none";
+                }
+            </script>
+            <?php } ?>
+            
+            <?php if(isset($_GET["messaggio"])){ ?>
+            <script>
+            	setTimeout(eliminaMessaggio, 5000);
+                function eliminaMessaggio(){
+                	var messaggi = document.querySelectorAll(".alert-success");
+                	if(messaggi.length > 0) messaggi[0].style.display="none";
                 }
             </script>
             <?php } ?>

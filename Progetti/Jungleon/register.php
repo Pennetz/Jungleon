@@ -1,6 +1,7 @@
 <?php 
 
 session_start();
+require_once __DIR__ . '/API/chiavi.php';
 
 ini_set("display_errors", 1);
 error_reporting(E_ALL);
@@ -17,21 +18,24 @@ try {
         exit();
     }
 
-    // registra l'utente facendo una ?curl a api.php
+    // registra l'utente facendo una chiamata all'API (usa localhost per chiamate interne)
+    $apiUrl = "http://localhost/Progetti/Jungleon/API/Register";
+    
     $context = stream_context_create([
         'http' => [
             'method' => 'POST',
             'header' => [
                 "Content-Type: application/json",
-                "Origin: https://crispy-space-invention-7v7q7wx7r7xrfx66w-80.app.github.dev/",
             ],
-            'content' => json_encode(["username" => $username, "email" => $email ?? null, "nome" => $nome, "password" => $password])
+            'content' => json_encode(["username" => $username, "email" => $email ?? null, "nome" => $nome, "password" => $password]),
+            'ignore_errors' => true  // Necessario per catturare anche risposte con errori HTTP
         ]
     ]);
-    $response = file_get_contents("https://crispy-space-invention-7v7q7wx7r7xrfx66w-80.app.github.dev/Progetti/Jungleon/API/Register", false, $context);
+    $response = file_get_contents($apiUrl, false, $context);
 
     if ($response === false) {
-        header("Location: registrati.php?errore=" . urlencode("Errore di connessione al servizio di registrazione"));
+        $error = error_get_last();
+        header("Location: registrati.php?errore=" . urlencode("Errore di connessione: " . ($error['message'] ?? 'sconosciuto')));
         exit();
     }
     
@@ -47,7 +51,9 @@ try {
     //echo var_dump($response_data);
 
     if ($success) {
-        echo "Registrazione e login avvenuta con successo.";
+        $registeredUsername = $response_data['data']['username'] ?? $username;
+        header("Location: accedi.php?messaggio=" . urlencode("Registrazione completata! Effettua il login.") . "&username=" . urlencode($registeredUsername));
+        exit();
     } else {
         $errore = $apiError ?: "Errore durante la registrazione";
         header("Location: registrati.php?errore=" . urlencode($errore));

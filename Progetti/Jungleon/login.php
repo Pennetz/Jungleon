@@ -1,6 +1,6 @@
 <?php
     session_start();
-
+    require_once __DIR__ . '/API/chiavi.php';
 
     ini_set('display_errors', 1);
     error_reporting(E_ALL);
@@ -29,17 +29,19 @@
         ]);*/
 
 
+// Chiamata all'API usando localhost (chiamata interna server-to-server)
+$apiUrl = "http://localhost/Progetti/Jungleon/API/Login";
+
 $context = stream_context_create([
     'http' => [
         'method' => 'POST',
         'header' => [
             'Content-Type: application/json',
-            'Origin: https://crispy-space-invention-7v7q7wx7r7xrfx66w-80.app.github.dev/'
         ],
         'content' => json_encode(["username" => $username, "password" => $password])
     ]
 ]);
-$response = file_get_contents("https://crispy-space-invention-7v7q7wx7r7xrfx66w-80.app.github.dev/Progetti/Jungleon/API/Login", false, $context);
+$response = file_get_contents($apiUrl, false, $context);
 //var_dump($response);
 
 $response_data = json_decode($response, true);
