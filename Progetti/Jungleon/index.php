@@ -62,6 +62,7 @@ session_start();
                 <li class="list-group-item"><a href="./diagrammaER.html">Diagramma ER</a></li>
                 <li class="list-group-item"><a href="./diagrammaClassi.html">Diagramma delle classi</a></li>
                 <li class="list-group-item"><a href="./diagrammaCasiDuso.html">Diagramma casi d'uso</a></li>
+                <li class="list-group-item"><a href="https://jungleon.lovable.app">Mockup del sito</a></li>
             <?php
                 if (isset($_SESSION['username'])) {
                     

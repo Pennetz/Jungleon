@@ -105,7 +105,7 @@ if(isset($_SESSION["username"])){
                         />
                     </div>
                     <h6>
-                        <button type="submit" class="btn btn-primary">Conferma</button> hai già un account?
+                        <button type="submit" class="btn btn-primary">Registrati</button> hai già un account?
                         <a href="accedi.php">Accedi</a>
                     </h6>
                 </form>

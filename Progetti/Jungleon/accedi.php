@@ -89,7 +89,7 @@ session_start();
                         />
                     </div>
                     <h6>
-                        <button type="submit" class="btn btn-primary">Conferma</button> oppure
+                        <button type="submit" class="btn btn-primary">Accedi</button> oppure
                         <a href="registrati.php">Registrati</a>
                     </h6>
             </div>

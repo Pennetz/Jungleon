@@ -1,3 +1,4 @@
-/installPennettaZupolino.sh
-/config.inc.php
-/phpmyadmin.sql
+installPennettaZupolino.sh
+config.inc.php
+phpmyadmin.swl
+phpmyadmin.sql
