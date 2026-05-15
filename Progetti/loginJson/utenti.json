@@ -16,5 +16,11 @@
         "hash": "f9330107e252f520f4c9764bf2eadef8dde8cdf0e2972a9437a3e3d350149e3ec17531821e5642a2e57b3f2cd7b98194",
         "role": "none",
         "color": "#fd5812"
+    },
+    {
+        "username": "papa",
+        "hash": "63fc3f5e0d16224ddffdbdde4625190675de70799e52db4989c7e61a28ae792412ecbf3333459490261e28cd2ae2d7ea",
+        "role": "none",
+        "color": "#8d9876"
     }
 ]

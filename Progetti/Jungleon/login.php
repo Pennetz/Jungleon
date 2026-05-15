@@ -47,9 +47,12 @@ $response = file_get_contents($apiUrl, false, $context);
 $response_data = json_decode($response, true);
 //var_dump($response_data);
 
-if ($response_data["data"]["token"]) {
+if (!empty($response_data["data"]["token"])) {
     $_SESSION['token'] = $response_data["data"]["token"];
-    $_SESSION['username'] = $username;
+    $_SESSION['username'] = $response_data["data"]["username"] ?? $username;
+    $_SESSION['ruoli'] = $response_data["data"]["ruoli"] ?? [];
+    $_SESSION['privilegi'] = $response_data["data"]["privilegi"] ?? [];
+    $_SESSION['restrizioni'] = $response_data["data"]["restrizioni"] ?? [];
     header("Location: VisualizzaUtente.php");
     exit();
 } else {

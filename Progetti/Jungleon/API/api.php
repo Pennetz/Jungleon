@@ -4,6 +4,7 @@ header("content-type: application/json; charset= utf-8");
 die(json_encode($_SERVER));*/
 require __DIR__ . '/vendor/autoload.php';
 require __DIR__ . '/chiavi.php';
+require_once __DIR__ . '/../classi/Mostro.php';
 
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
@@ -33,7 +34,7 @@ function documentazione(){
   <body>
     <div class="container"> 
 	    <h1 class="alert alert-info">API Jungleon service</h1>
-	    <h2 class="alert alert-danger" title="Rivolgiti ad un moderatore" alt="Rivolgiti ad un moderatore">BASIC AUTH REQUIRED</h2>
+	    <h2 class="alert alert-danger" title="Rivolgiti ad un moderatore" alt="Rivolgiti ad un moderatore">AUTH REQUIRED</h2>
         
        	
         <h3 class="alert alert-warning">Crea nuovo ruolo</h3>
@@ -194,6 +195,322 @@ function calcola_hash_password($password, $salt){
     return hash('sha256', $salt . $pepper . $password);
 }
 
+function ruoli_utente_db($db, $username){
+  $stmt = $db->prepare("SELECT DISTINCT Ruoli FROM Ruoli_Utenti WHERE Utenti=? ORDER BY Ruoli ASC");
+  if (!$stmt) {
+    return [];
+  }
+
+  $stmt->bind_param("s", $username);
+  $stmt->execute();
+  $result = $stmt->get_result();
+
+  $ruoli = [];
+  while ($row = $result->fetch_assoc()) {
+    if (!empty($row["Ruoli"])) {
+      $ruoli[] = $row["Ruoli"];
+    }
+  }
+
+  $stmt->close();
+  return array_values(array_unique($ruoli));
+}
+
+function privilegi_utente_db($db, $username){
+  $stmt = $db->prepare(
+    "SELECT DISTINCT Privilegi.nome, Privilegi.tipo, Privilegi.descrizione " .
+    "FROM Privilegi " .
+    "INNER JOIN Privilegi_Ruoli ON Privilegi_Ruoli.Privilegi = Privilegi.nome " .
+    "INNER JOIN Ruoli_Utenti ON Ruoli_Utenti.Ruoli = Privilegi_Ruoli.Ruoli " .
+    "WHERE Ruoli_Utenti.Utenti = ? " .
+    "ORDER BY Privilegi.nome ASC"
+  );
+
+  if (!$stmt) {
+    return [];
+  }
+
+  $stmt->bind_param("s", $username);
+  $stmt->execute();
+  $result = $stmt->get_result();
+
+  $privilegi = [];
+  while ($row = $result->fetch_assoc()) {
+    $privilegi[] = [
+      "nome" => $row["nome"],
+      "tipo" => $row["tipo"] ?? null,
+      "descrizione" => $row["descrizione"] ?? null
+    ];
+  }
+
+  $stmt->close();
+  return $privilegi;
+}
+
+function restrizioni_utente_db($db, $username){
+  $stmt = $db->prepare(
+    "SELECT Privilegi, Utenti_Mandante, dataAssegnazione, dataFine, motivazione " .
+    "FROM RestrizioniPrivilegiUtenti " .
+    "WHERE Utenti_Ricevente = ? AND dataFine > NOW() " .
+    "ORDER BY dataFine DESC"
+  );
+
+  if (!$stmt) {
+    return [];
+  }
+
+  $stmt->bind_param("s", $username);
+  $stmt->execute();
+  $result = $stmt->get_result();
+
+  $restrizioni = [];
+  while ($row = $result->fetch_assoc()) {
+    $restrizioni[] = $row;
+  }
+
+  $stmt->close();
+  return $restrizioni;
+}
+
+function permessi_validi_utente_db($db, $username){
+  $ruoli = ruoli_utente_db($db, $username);
+  $privilegi = privilegi_utente_db($db, $username);
+  $restrizioni = restrizioni_utente_db($db, $username);
+
+  $privilegi_bloccati = [];
+  foreach ($restrizioni as $restrizione) {
+    if (!empty($restrizione["Privilegi"])) {
+      $privilegi_bloccati[] = $restrizione["Privilegi"];
+    }
+  }
+
+  $privilegi_validi = [];
+  foreach ($privilegi as $privilegio) {
+    if (!in_array($privilegio["nome"], $privilegi_bloccati, true)) {
+      $privilegi_validi[] = $privilegio;
+    }
+  }
+
+  return [
+    "ruoli" => $ruoli,
+    "privilegi" => $privilegi_validi,
+    "restrizioni" => $restrizioni
+  ];
+}
+
+function tipi_mostri_db($db){
+  $result = $db->query("SELECT nome FROM TipiMostri ORDER BY nome ASC");
+  $tipi = [];
+  while ($row = $result->fetch_assoc()) {
+    $tipi[] = $row["nome"];
+  }
+  return $tipi;
+}
+
+function template_oggetti_utente_db($db, $username){
+  $stmt = $db->prepare(
+    "SELECT ID, nome, livello, descrizione, storia, valore, `rarità`, pubblico, dataCreazione " .
+    "FROM TemplateOggetti WHERE Utenti = ? ORDER BY dataCreazione DESC"
+  );
+  if (!$stmt) {
+    return [];
+  }
+  $stmt->bind_param("s", $username);
+  $stmt->execute();
+  $result = $stmt->get_result();
+  $oggetti = [];
+  while ($row = $result->fetch_assoc()) {
+    $oggetti[] = $row;
+  }
+  $stmt->close();
+  return $oggetti;
+}
+
+function template_oggetti_pubblici_db($db, $username){
+  $stmt = $db->prepare(
+    "SELECT ID, nome, livello, descrizione, storia, valore, `rarità`, pubblico, dataCreazione " .
+    "FROM TemplateOggetti WHERE pubblico = 1 AND (Utenti IS NULL OR Utenti <> ?) ORDER BY dataCreazione DESC"
+  );
+  if (!$stmt) {
+    return [];
+  }
+  $stmt->bind_param("s", $username);
+  $stmt->execute();
+  $result = $stmt->get_result();
+  $oggetti = [];
+  while ($row = $result->fetch_assoc()) {
+    $oggetti[] = $row;
+  }
+  $stmt->close();
+  return $oggetti;
+}
+
+function mostri_utente_db($db, $username){
+  $stmt = $db->prepare(
+    "SELECT ID, nome, livello, Utenti, descrizione, esperienzaData, oroDato, vita, resistenza, `velocità` AS velocita, forza, pubblico, dataCreazione " .
+    "FROM Mostri WHERE Utenti = ? ORDER BY dataCreazione DESC"
+  );
+  if (!$stmt) {
+    return [];
+  }
+  $stmt->bind_param("s", $username);
+  $stmt->execute();
+  $result = $stmt->get_result();
+  $mostri = [];
+  while ($row = $result->fetch_assoc()) {
+    $mostri[] = $row;
+  }
+  $stmt->close();
+  return $mostri;
+}
+
+function user_exists_db($db, $username){
+  $stmt = $db->prepare("SELECT username FROM Utenti WHERE username = ? LIMIT 1");
+  if (!$stmt) return false;
+  $stmt->bind_param("s", $username);
+  $stmt->execute();
+  $res = $stmt->get_result();
+  $exists = $res && $res->num_rows > 0;
+  $stmt->close();
+  return $exists;
+}
+
+function send_message_db($db, $mittente, $ricevente, $testo, $tipo = 'messaggio'){
+  $stmt = $db->prepare(
+    "INSERT INTO MessaggiUtenti (`Utenti-Mandante`, `Utenti-Ricevente`, `tipo`, `dataInvio`, `testo`, `visualizzato`) VALUES (?, ?, ?, NOW(), ?, 0)"
+  );
+  $stmt->bind_param("ssss", $mittente, $ricevente, $tipo, $testo);
+  $stmt->execute();
+  $id = $db->insert_id;
+  $stmt->close();
+  return $id;
+}
+
+function get_chats_for_user_db($db, $username){
+  $stmt = $db->prepare(
+    "SELECT `Utenti-Mandante` AS mandante, `Utenti-Ricevente` AS ricevente, tipo, dataInvio, testo, visualizzato " .
+    "FROM MessaggiUtenti " .
+    "WHERE `Utenti-Mandante` = ? OR `Utenti-Ricevente` = ? " .
+    "ORDER BY dataInvio DESC, ID DESC"
+  );
+  $stmt->bind_param("ss", $username, $username);
+  $stmt->execute();
+  $res = $stmt->get_result();
+
+  $conversazioni = [];
+  while ($row = $res->fetch_assoc()) {
+    $other = ($row['mandante'] === $username) ? $row['ricevente'] : $row['mandante'];
+    if ($other === null || $other === '') {
+      continue;
+    }
+
+    if (!isset($conversazioni[$other])) {
+      $conversazioni[$other] = [
+        'other' => $other,
+        'last_messaggio' => $row['testo'] ?? '',
+        'last_data' => $row['dataInvio'] ?? null,
+        'unread_count' => 0,
+      ];
+    }
+
+    if ($row['ricevente'] === $username && (int)($row['visualizzato'] ?? 0) === 0) {
+      $conversazioni[$other]['unread_count']++;
+    }
+
+    if ($conversazioni[$other]['last_data'] === null || ($row['dataInvio'] ?? '') > $conversazioni[$other]['last_data']) {
+      $conversazioni[$other]['last_messaggio'] = $row['testo'] ?? '';
+      $conversazioni[$other]['last_data'] = $row['dataInvio'] ?? null;
+    }
+  }
+
+  $stmt->close();
+
+  $list = array_values($conversazioni);
+  usort($list, static function ($a, $b) {
+    return strcmp((string)($b['last_data'] ?? ''), (string)($a['last_data'] ?? ''));
+  });
+
+  return $list;
+}
+
+function get_messages_between_users_db($db, $username, $otherUser){
+  $stmt = $db->prepare(
+    "SELECT `Utenti-Mandante` AS Mittente, `Utenti-Ricevente` AS Ricevente, testo, tipo, visualizzato AS visto, dataInvio AS dataCreazione " .
+    "FROM MessaggiUtenti " .
+    "WHERE (`Utenti-Mandante` = ? AND `Utenti-Ricevente` = ?) OR (`Utenti-Mandante` = ? AND `Utenti-Ricevente` = ?) " .
+    "ORDER BY dataInvio ASC, ID ASC"
+  );
+  $stmt->bind_param("ssss", $username, $otherUser, $otherUser, $username);
+  $stmt->execute();
+  $res = $stmt->get_result();
+  $list = [];
+  while ($row = $res->fetch_assoc()) $list[] = $row;
+  $stmt->close();
+  return $list;
+}
+
+function mark_messages_seen_db($db, $username, $otherUser){
+  $stmt = $db->prepare(
+    "UPDATE MessaggiUtenti SET visualizzato = 1 WHERE `Utenti-Mandante` = ? AND `Utenti-Ricevente` = ? AND visualizzato = 0"
+  );
+  $stmt->bind_param("ss", $otherUser, $username);
+  $stmt->execute();
+  $affected = $stmt->affected_rows;
+  $stmt->close();
+  return $affected;
+}
+
+function count_unseen_in_chat_db($db, $username, $otherUser){
+  $stmt = $db->prepare(
+    "SELECT COUNT(*) as c FROM MessaggiUtenti WHERE `Utenti-Mandante` = ? AND `Utenti-Ricevente` = ? AND visualizzato = 0"
+  );
+  $stmt->bind_param("ss", $otherUser, $username);
+  $stmt->execute();
+  $res = $stmt->get_result();
+  $row = $res->fetch_assoc();
+  $stmt->close();
+  return (int)($row['c'] ?? 0);
+}
+
+function count_received_messages($db, $username){
+  $stmt = $db->prepare("SELECT COUNT(*) as c FROM MessaggiUtenti WHERE `Utenti-Ricevente` = ?");
+  $stmt->bind_param("s", $username);
+  $stmt->execute();
+  $res = $stmt->get_result();
+  $row = $res->fetch_assoc();
+  $stmt->close();
+  return (int)($row['c'] ?? 0);
+}
+
+function moderatori_disponibili_db($db){
+  $stmt = $db->prepare(
+    "SELECT DISTINCT Ruoli_Utenti.Utenti as username " .
+    "FROM Ruoli_Utenti " .
+    "INNER JOIN Privilegi_Ruoli ON Privilegi_Ruoli.Ruoli = Ruoli_Utenti.Ruoli " .
+    "INNER JOIN Privilegi ON Privilegi.nome = Privilegi_Ruoli.Privilegi " .
+    "WHERE LOWER(Privilegi.tipo) = LOWER(?)"
+  );
+  $privType = 'Accettazione lamentele';
+  $stmt->bind_param("s", $privType);
+  $stmt->execute();
+  $res = $stmt->get_result();
+  $cands = [];
+  while ($row = $res->fetch_assoc()) {
+    $user = $row['username'];
+    // check active restrictions
+    $restr = restrizioni_utente_db($db, $user);
+    $blocked = false;
+    foreach ($restr as $r) {
+      if (strcasecmp($r['Privilegi'], 'Accettazione lamentele') === 0) { $blocked = true; break; }
+    }
+    if (!$blocked) {
+      $cands[] = ['username' => $user, 'count' => count_received_messages($db, $user)];
+    }
+  }
+  usort($cands, function($a,$b){ return $a['count'] <=> $b['count']; });
+  return $cands;
+}
+
 
 /* ------------------------ REGISTRAZIONE E LOGIN ------------------------ */
 
@@ -201,24 +518,21 @@ function calcola_hash_password($password, $salt){
 function registra_utente_db($db, $username, $email, $nome, $password, $ruolo = 'UtenteBase') {
     if (empty($username) || empty($password) || empty($nome)) {
         http_response_code(400);
-        die(json_encode(["error" => "Username, password e nome obbligatori"]));
+        die(json_encode(["error" => "username, password e nome obbligatori"]));
     }
 
     // Controllo duplicati
     if ($email == null){
-        $stmt = $db->prepare("SELECT Username FROM Utenti WHERE Username=?");
+        $stmt = $db->prepare("SELECT username FROM Utenti WHERE username=?");
         $stmt->bind_param("s", $username);
 
-    } else {
-        $stmt = $db->prepare("SELECT Username FROM Utenti WHERE Username=? OR Email=?");
-        $stmt->bind_param("ss", $username, $email);
     }
 
     $stmt->execute();
     $result = $stmt->get_result();
     if ($result->num_rows > 0) {
         http_response_code(409);
-        die(json_encode(["error" => "Username o email già in uso"]));
+        die(json_encode(["error" => "username o email già in uso"]));
     }
 
     $salt = genera_salt();
@@ -226,10 +540,10 @@ function registra_utente_db($db, $username, $email, $nome, $password, $ruolo = '
     $password_finale = $salt . $hash;
 
     if ($email == null) {
-      $stmt = $db->prepare("INSERT INTO Utenti (Username, Nome, Password) VALUES (?, ?, ?)");
+      $stmt = $db->prepare("INSERT INTO Utenti (username, nome, password) VALUES (?, ?, ?)");
       $stmt->bind_param("sss", $username, $nome, $password_finale);
     } else {
-      $stmt = $db->prepare("INSERT INTO Utenti (Username, Email, Nome, Password) VALUES (?, ?, ?, ?)");
+      $stmt = $db->prepare("INSERT INTO Utenti (username, email, nome, password) VALUES (?, ?, ?, ?)");
       $stmt->bind_param("ssss", $username, $email, $nome, $password_finale);
     }
     //var_dump($stmt);
@@ -239,14 +553,14 @@ function registra_utente_db($db, $username, $email, $nome, $password, $ruolo = '
     //print("2\n");
 
     if (!$success) {
-        $stmt = $db->prepare("DELETE FROM Utenti WHERE Username=?");
+        $stmt = $db->prepare("DELETE FROM Utenti WHERE username=?");
         $stmt->bind_param("s", $username);
         $stmt->execute();
         http_response_code(500);
         die(json_encode(["error" => "Errore durante la registrazione"]));
     } else {
 
-        $stmt = $db->prepare("INSERT INTO `Ruoli_Utenti` (`ID`, `Utente`, `Ruolo`) VALUES (NULL, ?, ?);");
+        $stmt = $db->prepare("INSERT INTO `Ruoli_Utenti` (`ID`, `Utenti`, `Ruoli`) VALUES (NULL, ?, ?);");
         $stmt->bind_param("ss", $username, $ruolo);
         //print("3\n");
         $success = $stmt->execute();
@@ -254,7 +568,7 @@ function registra_utente_db($db, $username, $email, $nome, $password, $ruolo = '
           return ["success" => true, "username" => $username];
         }
         /*
-        $stmt = $db->prepare("SELECT Username FROM Utenti WHERE Username=?");
+        $stmt = $db->prepare("SELECT username FROM Utenti WHERE username=?");
         $stmt->bind_param("s", $username);
         $success = $stmt->execute();
         if(!$success) {
@@ -264,8 +578,8 @@ function registra_utente_db($db, $username, $email, $nome, $password, $ruolo = '
         //print("4\n");
         $result = $stmt->get_result();
         $user = $result->fetch_assoc();
-        if ($user["Username"] == $username) {
-            return ["success" => true, "Username" => $user["Username"]];
+        if ($user["username"] == $username) {
+            return ["success" => true, "username" => $user["username"]];
 
         } else {
             http_response_code(500);
@@ -276,12 +590,75 @@ function registra_utente_db($db, $username, $email, $nome, $password, $ruolo = '
     }
 }
 
+function crea_mostro_db($db, Mostro $mostro){
+  try {
+    // Inserimento diretto: la struttura del DB gestisce già i valori di default e i vincoli.
+    $stmt = $db->prepare(
+      "INSERT INTO Mostri (nome, livello, Utenti, descrizione, esperienzaData, oroDato, vita, resistenza, `velocità`, forza, pubblico) " .
+      "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    );
+
+    [$nome, $livello, $utenti, $descrizione, $esperienzaData, $oroDato, $vita, $resistenza, $velocita, $forza, $pubblico] = $mostro->toDbValues();
+
+    $stmt->bind_param(
+      "sissiiiiiii",
+      $nome,
+      $livello,
+      $utenti,
+      $descrizione,
+      $esperienzaData,
+      $oroDato,
+      $vita,
+      $resistenza,
+      $velocita,
+      $forza,
+      $pubblico
+    );
+
+    $stmt->execute();
+
+    $mostroId = $db->insert_id;
+
+    $tipiMostri = array_values(array_unique($mostro->tipiMostri ?? []));
+    foreach ($tipiMostri as $tipoMostro) {
+      if ($tipoMostro === null || $tipoMostro === '') {
+        continue;
+      }
+      $stmt = $db->prepare("INSERT INTO TipiMostriMostri (Mostri, TipiMostri) VALUES (?, ?)");
+      $stmt->bind_param("is", $mostroId, $tipoMostro);
+      $stmt->execute();
+    }
+
+    $oggetti = array_values(array_unique(array_merge($mostro->oggettiUtente ?? [], $mostro->oggettiPubblici ?? [])));
+    foreach ($oggetti as $oggettoId) {
+      if ($oggettoId === null || $oggettoId === '') {
+        continue;
+      }
+      $oggettoId = (int)$oggettoId;
+      $numero = 1;
+      $stmt = $db->prepare("INSERT INTO TemplateOggettiMostri (Mostri, TemplateOggetti, numero) VALUES (?, ?, ?)");
+      $stmt->bind_param("iii", $mostroId, $oggettoId, $numero);
+      $stmt->execute();
+    }
+
+    return [
+      "success" => true,
+      "id" => $mostroId,
+      "nome" => $nome
+    ];
+  } catch (Exception $e) {
+    return [
+      "success" => false,
+      "error" => $e->getMessage()
+    ];
+  }
+}
+
 function login_utente_db($db, $username, $password){
   $stmt = $db->prepare(
-    "SELECT Utenti.Username, Utenti.Password, Ruoli_Utenti.Ruolo " .
+    "SELECT Utenti.username, Utenti.password " .
     "FROM Utenti " .
-    "LEFT JOIN Ruoli_Utenti ON Ruoli_Utenti.Utente = Utenti.Username " .
-    "WHERE Utenti.Username=?"
+    "WHERE Utenti.username=?"
   );
   $stmt->bind_param("s", $username);
     $stmt->execute();
@@ -293,7 +670,7 @@ function login_utente_db($db, $username, $password){
         die(json_encode(["error" => "Credenziali non valide"]));
     }
 
-    $password_db = $user['Password'];
+    $password_db = $user['password'];
     $salt = substr($password_db, 0, 32);
     $hash_db = substr($password_db, 32);
 
@@ -311,8 +688,14 @@ function login_utente_db($db, $username, $password){
       "exp" => time() + JWT_EXP,
       "iss" => JWT_ISSUER,
       "aud" => JWT_AUDIENCE,
-      "sub" => $user["Username"]
+      "sub" => $user["username"],
+      "username" => $user["username"]
     ];
+
+    $permessi = permessi_validi_utente_db($db, $user["username"]);
+    $payload["ruoli"] = $permessi["ruoli"];
+    $payload["privilegi"] = $permessi["privilegi"];
+    $payload["restrizioni"] = $permessi["restrizioni"];
 
     $token = JWT::encode($payload, JWT_SECRET, 'HS256');
 
@@ -330,7 +713,15 @@ function login_utente_db($db, $username, $password){
 
     );*/
 
-    return ["success" => true, "token" => $token, "expires_in" => JWT_EXP, "username" => $user["Username"]];
+    return [
+      "success" => true,
+      "token" => $token,
+      "expires_in" => JWT_EXP,
+      "username" => $user["username"],
+      "ruoli" => $permessi["ruoli"],
+      "privilegi" => $permessi["privilegi"],
+      "restrizioni" => $permessi["restrizioni"]
+    ];
 }
 
 
@@ -358,7 +749,7 @@ function ruolo_utente_db($db, $username){
     return null;
   }
 
-  $stmt = $db->prepare("SELECT Ruolo FROM Ruoli_Utenti WHERE Utente=? LIMIT 1");
+  $stmt = $db->prepare("SELECT Ruoli FROM Ruoli_Utenti WHERE Utenti=? ORDER BY dataAssegnazione DESC LIMIT 1");
   if (!$stmt) {
     return null;
   }
@@ -369,7 +760,7 @@ function ruolo_utente_db($db, $username){
   $row = $result->fetch_assoc();
   $stmt->close();
 
-  return $row["Ruolo"] ?? null;
+  return $row["Ruoli"] ?? null;
 }
 
 function permessi_ruolo_db($db, $ruolo){
@@ -378,11 +769,11 @@ function permessi_ruolo_db($db, $ruolo){
   }
 
   $stmt = $db->prepare(
-    "SELECT Privilegi.Nome, Privilegi.Tipo, Privilegi.Descrizione " .
+    "SELECT DISTINCT Privilegi.nome, Privilegi.tipo, Privilegi.descrizione " .
     "FROM Privilegi " .
-    "INNER JOIN PrivilegiRuoli ON PrivilegiRuoli.Privilegio = Privilegi.Nome " .
-    "WHERE PrivilegiRuoli.Ruolo = ? " .
-    "ORDER BY Privilegi.Nome ASC"
+    "INNER JOIN Privilegi_Ruoli ON Privilegi_Ruoli.Privilegi = Privilegi.nome " .
+    "WHERE Privilegi_Ruoli.Ruoli = ? " .
+    "ORDER BY Privilegi.nome ASC"
   );
 
   if (!$stmt) {
@@ -395,11 +786,11 @@ function permessi_ruolo_db($db, $ruolo){
 
   $permessi = [];
   while ($row = $result->fetch_assoc()) {
-    if (isset($row["Nome"])) {
+    if (isset($row["nome"])) {
       $permessi[] = [
-        "nome" => $row["Nome"],
-        "tipo" => $row["Tipo"] ?? null,
-        "descrizione" => $row["Descrizione"] ?? null
+        "nome" => $row["nome"],
+        "tipo" => $row["tipo"] ?? null,
+        "descrizione" => $row["descrizione"] ?? null
       ];
     }
   }
@@ -414,9 +805,9 @@ function dungeons_db($db, $pagina){
   $pg2 = 1*($pagina-1);
   //print_r("PG1: $pg1 - PG2: $pg2\n");
   if($pg2 <= 0)
-    $result = $db->query('SELECT * from Dungeons WHERE Pubblico = "True" ORDER BY DataCreazione DESC LIMIT 45');
+    $result = $db->query('SELECT * from Dungeons WHERE Pubblico = "True" ORDER BY dataCreazione DESC LIMIT 45');
   else
-    $result = $db->query("(SELECT * from Dungeons WHERE Pubblico = \"True\" ORDER BY DataCreazione DESC LIMIT $pg1) EXCEPT (SELECT * from Dungeons WHERE Pubblico = \"True\" ORDER BY DataCreazione DESC LIMIT $pg2)");
+    $result = $db->query("(SELECT * from Dungeons WHERE Pubblico = \"True\" ORDER BY dataCreazione DESC LIMIT $pg1) EXCEPT (SELECT * from Dungeons WHERE Pubblico = \"True\" ORDER BY dataCreazione DESC LIMIT $pg2)");
   //var_dump($result);
   $risp=array();
   while($row = $result->fetch_assoc())
@@ -427,7 +818,7 @@ function altriDungeons_db($db, $pagina){
   #$cancella=$db->query("delete from games_partite WHERE PLAYER2 IS NULL AND CREATED_AT < NOW() - INTERVAL 1 DAY	");
   $pg1=1*$pagina;
   $pg2=1*($pagina-1);
-  $result = $db->query("(SELECT * from Dungeons WHERE Pubblico = True ORDER BY DataCreazione DESC LIMIT $pg1) - (SELECT * from Dungeons WHERE Pubblico = True ORDER BY DataCreazione DESC LIMIT $pg2)");
+  $result = $db->query("(SELECT * from Dungeons WHERE Pubblico = True ORDER BY dataCreazione DESC LIMIT $pg1) - (SELECT * from Dungeons WHERE Pubblico = True ORDER BY dataCreazione DESC LIMIT $pg2)");
   $risp=array();
   while($row = $result->fetch_assoc())
     $risp[]=$row;
@@ -458,21 +849,21 @@ function dungeonsFiltrati_db($db,$filtro){
     default: $filtro=$db->real_escape_string($filtro); break;
   }
 
-  //$result = $db->query("SELECT * from Dungeons WHERE Pubblico = True AND (Nome LIKE '%$filtro%' OR Descrizione LIKE '%$filtro%') ORDER BY DataCreazione DESC");
+  //$result = $db->query("SELECT * from Dungeons WHERE Pubblico = True AND (Nome LIKE '%$filtro%' OR Descrizione LIKE '%$filtro%') ORDER BY dataCreazione DESC");
   $risp=array();
   //while($row = $result->fetch_assoc())
     //$risp[]=$row;
   return $risp;
 }
   
-function insert_partita($db,$player){
-if (strpos(strtoupper($player), "GRANA")!==false)
-    return -1;
-  $stmt = $db->prepare("INSERT INTO games_partite(PLAYER1) VALUES (?)");
-  $stmt->bind_param("s", $player); 
-  $stmt->execute();
-  return $db->insert_id;
-}
+// function insert_partita($db,$player){
+// if (strpos(strtoupper($player), "GRANA")!==false)
+//     return -1;
+//   $stmt = $db->prepare("INSERT INTO games_partite(PLAYER1) VALUES (?)");
+//   $stmt->bind_param("s", $player); 
+//   $stmt->execute();
+//   return $db->insert_id;
+// }
 
 function verifica_jwt() {
     // Prova a recuperare l'header Authorization in vari modi
@@ -511,11 +902,49 @@ function verifica_jwt() {
 
     try {
         $decoded = JWT::decode($jwt, new Key(JWT_SECRET, 'HS256'));
-        return $decoded; // contiene id utente, username, ecc.
+      return $decoded; // contiene username, privilegi e restrizioni
     } catch (Exception $e) {
         error_log("verifica_jwt: Errore decode - " . $e->getMessage());
         errore(401, "Token non valido o scaduto");
     }
+}
+
+function nomi_da_claim_privilegi($claim){
+  $nomi = [];
+  foreach ((array)$claim as $item) {
+    if (is_string($item)) {
+      $nomi[] = $item;
+      continue;
+    }
+
+    if (is_array($item)) {
+      foreach (["nome", "Nome", "Privilegi"] as $chiave) {
+        if (isset($item[$chiave])) {
+          $nomi[] = $item[$chiave];
+          break;
+        }
+      }
+      continue;
+    }
+
+    if (is_object($item)) {
+      foreach (["nome", "Nome", "Privilegi"] as $chiave) {
+        if (isset($item->{$chiave})) {
+          $nomi[] = $item->{$chiave};
+          break;
+        }
+      }
+    }
+  }
+
+  return array_values(array_unique(array_filter($nomi, static fn($val) => $val !== null && $val !== '')));
+}
+
+function token_ha_privilegio($decoded, $nomePrivilegio){
+  $privilegi = nomi_da_claim_privilegi($decoded->privilegi ?? []);
+  $restrizioni = nomi_da_claim_privilegi($decoded->restrizioni ?? []);
+
+  return in_array($nomePrivilegio, $privilegi, true) && !in_array($nomePrivilegio, $restrizioni, true);
 }
 
 
@@ -530,105 +959,108 @@ if (strpos(strtoupper($ruolo), "GRANA")!==false)
 
 
 
-function insert_mossa($db,$partita,$player,$mossa){
+// function insert_mossa($db,$partita,$player,$mossa){
 	
-  $stmt = $db->prepare("SELECT * from games_partite WHERE ID=?");
-  $stmt->bind_param("i", $partita); 
-  $stmt->execute();
-  $result = $stmt->get_result();
-  $row = $result->fetch_assoc();
-  if ($row==null)
-  return -1;
-  if ( $row["PLAYER2"]==null)
-  return -2;
-  if ( $player==null)
-  return -2;
+//   $stmt = $db->prepare("SELECT * from games_partite WHERE ID=?");
+//   $stmt->bind_param("i", $partita); 
+//   $stmt->execute();
+//   $result = $stmt->get_result();
+//   $row = $result->fetch_assoc();
+//   if ($row==null)
+//   return -1;
+//   if ( $row["PLAYER2"]==null)
+//   return -2;
+//   if ( $player==null)
+//   return -2;
   
-  /*if ($row["PLAYER1"]!=$player && $row["PLAYER2"]!=$player)*/
-  if ($row["PLAYER1"]!=$player && $row["PLAYER2"]!=$player && $row["PLAYER3"]!=$player && $row["PLAYER3"]!=$player &&
-  $row["PLAYER4"]!=$player && $row["PLAYER5"]!=$player && $row["PLAYER6"]!=$player && $row["PLAYER7"]!=$player)
-  return -3;
+//   /*if ($row["PLAYER1"]!=$player && $row["PLAYER2"]!=$player)*/
+//   if ($row["PLAYER1"]!=$player && $row["PLAYER2"]!=$player && $row["PLAYER3"]!=$player && $row["PLAYER3"]!=$player &&
+//   $row["PLAYER4"]!=$player && $row["PLAYER5"]!=$player && $row["PLAYER6"]!=$player && $row["PLAYER7"]!=$player)
+//   return -3;
   
-  $stmt = $db->prepare("INSERT INTO games_mosse(MOSSA,PLAYER,GAME) VALUES (?,?,?)");
-  $stmt->bind_param("ssi", $mossa,$player,$partita); 
-  $stmt->execute();
-  return $db->insert_id;
-}
+//   $stmt = $db->prepare("INSERT INTO games_mosse(MOSSA,PLAYER,GAME) VALUES (?,?,?)");
+//   $stmt->bind_param("ssi", $mossa,$player,$partita); 
+//   $stmt->execute();
+//   return $db->insert_id;
+// }
 
 
-function mosse($db,$partita){
-  $stmt = $db->prepare("SELECT * FROM games_partite WHERE ID=?");
-  $stmt->bind_param("i", $partita); 
-  $stmt->execute();
-  $result = $stmt->get_result();
-  if ($result->num_rows==0)
-  	return -1;
+// function mosse($db,$partita){
+//   $stmt = $db->prepare("SELECT * FROM games_partite WHERE ID=?");
+//   $stmt->bind_param("i", $partita); 
+//   $stmt->execute();
+//   $result = $stmt->get_result();
+//   if ($result->num_rows==0)
+//   	return -1;
     
-  $stmt = $db->prepare("SELECT * from games_mosse WHERE GAME=? ORDER BY ID DESC");
-  $stmt->bind_param("i", $partita); 
-  $stmt->execute();
-  $result = $stmt->get_result();
-  $ris=array();
-  while($row = $result->fetch_assoc()) $ris[]=$row;
-  return $ris;
-}
+//   $stmt = $db->prepare("SELECT * from games_mosse WHERE GAME=? ORDER BY ID DESC");
+//   $stmt->bind_param("i", $partita); 
+//   $stmt->execute();
+//   $result = $stmt->get_result();
+//   $ris=array();
+//   while($row = $result->fetch_assoc()) $ris[]=$row;
+//   return $ris;
+// }
 
 
-function last_mossa($db,$partita){
-  $stmt = $db->prepare("SELECT * FROM games_partite WHERE ID=?");
-  $stmt->bind_param("i", $partita); 
-  $stmt->execute();
-  $result = $stmt->get_result();
-  if ($result->num_rows==0)
-  	return -1;
+// function last_mossa($db,$partita){
+//   $stmt = $db->prepare("SELECT * FROM games_partite WHERE ID=?");
+//   $stmt->bind_param("i", $partita); 
+//   $stmt->execute();
+//   $result = $stmt->get_result();
+//   if ($result->num_rows==0)
+//   	return -1;
     
-  $stmt = $db->prepare("SELECT * from games_mosse WHERE GAME=? ORDER BY ID DESC LIMIT 1");
-  $stmt->bind_param("i", $partita); 
-  $stmt->execute();
-  $result = $stmt->get_result();
-  $row = $result->fetch_assoc();
-  return $row;
-  }
+//   $stmt = $db->prepare("SELECT * from games_mosse WHERE GAME=? ORDER BY ID DESC LIMIT 1");
+//   $stmt->bind_param("i", $partita); 
+//   $stmt->execute();
+//   $result = $stmt->get_result();
+//   $row = $result->fetch_assoc();
+//   return $row;
+//   }
 
 
-function join_partita($db,$partita,$player){
-if (strpos(strtoupper($player), "GRANA")!==false)
-    return -2;
+// function join_partita($db,$partita,$player){
+// if (strpos(strtoupper($player), "GRANA")!==false)
+//     return -2;
 
-  $partite=ruolo_db($db,7);
-  $find=false;
-  foreach ($partite as $p)
-    if ($p["ID"]==$partita){ 
-    $find=true;
-    $n=-1;
-    for ($i=1;$i<=7;$i++){//
-    	$giocatore="PLAYER".$i;
-    	if ($p[$giocatore]==$player)
-      		return -1;
+//   $partite=ruolo_db($db,7);
+//   $find=false;
+//   foreach ($partite as $p)
+//     if ($p["ID"]==$partita){ 
+//     $find=true;
+//     $n=-1;
+//     for ($i=1;$i<=7;$i++){//
+//     	$giocatore="PLAYER".$i;
+//     	if ($p[$giocatore]==$player)
+//       		return -1;
     	
-        if ($p[$giocatore]==null && $n==-1)//
-        	$n=$i;//
-        }
-    }
-  if (!$find) return 0;
-  //echo $n;
-  $stmt = $db->prepare("UPDATE games_partite SET PLAYER$n=? WHERE ID=?");//PLAYER2
-  $stmt->bind_param("si", $player,$partita); 
-  if ($stmt->execute()) return 1;
-  else return -2;
-}
+//         if ($p[$giocatore]==null && $n==-1)//
+//         	$n=$i;//
+//         }
+//     }
+//   if (!$find) return 0;
+//   //echo $n;
+//   $stmt = $db->prepare("UPDATE games_partite SET PLAYER$n=? WHERE ID=?");//PLAYER2
+//   $stmt->bind_param("si", $player,$partita); 
+//   if ($stmt->execute()) return 1;
+//   else return -2;
+// }
 
 
 
 function errore($tipo,$error){
 	http_response_code($tipo);
-	//header("Content-Type: application/json; charset= utf-8");
-    $ris='{"error":'.$tipo.';"description":"'.$error.'"}';
-    die( $ris);
+  header("Content-Type: application/json; charset=utf-8");
+  die(json_encode([
+    "error" => $error,
+    "status" => $tipo
+  ]));
 }
 
 function rispondi_json($data){
 	http_response_code(200);
+  header("Content-Type: application/json; charset=utf-8");
 	echo json_encode($data,JSON_INVALID_UTF8_IGNORE);
 }
 
@@ -754,16 +1186,92 @@ if (is_null($parametri)){
       switch($parametri[0]){
         case "Register":
             $data = json_decode(file_get_contents('php://input'));
-            if (!isset($data->username/*, $data->email*/, $data->nome, $data->password)) {
+            if (!isset($data->username, $data->nome, $data->password)) {
                 http_response_code(400);
                 die(json_encode(["error" => "Dati mancanti"]));
             }
-            //registra l'utente (la mail è opzionale)
             $risposta = registra_utente_db(db_connect(), $data->username, $data->email ?? null, $data->nome, $data->password);
-            // imposto che la risposta è di tipo json di modo che nel client la possa interpretare correttamente
             header("Content-Type: application/json; charset= utf-8");
-            $oggetto=new risposta("POST","Registration completed",$risposta);
+            $oggetto = new risposta("POST", "Registration completed", $risposta);
             break;
+
+
+        case "Mostro":
+          $data = json_decode(file_get_contents('php://input'));
+          if (!$data) {
+            errore(400, "JSON non valido");
+          }
+
+          $decoded = verifica_jwt();
+          $usernameToken = $decoded->username ?? $decoded->sub ?? null;
+          if (!$usernameToken) {
+            errore(401, "Token senza username");
+          }
+
+          if (!token_ha_privilegio($decoded, "Crea Mostri")) {
+            errore(403, "Privilegio Crea Mostri non disponibile");
+          }
+
+          if (isset($data->Utenti) && $data->Utenti !== $usernameToken) {
+            errore(403, "Utente non coerente con il token");
+          }
+
+          $data->Utenti = $usernameToken;
+
+          if (!empty($data->pubblico) && (int)$data->pubblico === 1 && !token_ha_privilegio($decoded, "Pubblicazione")) {
+            errore(403, "Privilegio Pubblicazione non disponibile");
+          }
+
+          $mostro = Mostro::fromRequest($data);
+          $risposta = crea_mostro_db(db_connect(), $mostro);
+          if (!$risposta["success"]) {
+            errore(500, $risposta["error"]);
+          }
+
+          header("Content-Type: application/json; charset= utf-8");
+          $oggetto = new risposta("POST", "Monster created", $risposta);
+          break;
+
+        case "Messaggi":
+          // invia un messaggio a un altro utente
+          $data = json_decode(file_get_contents('php://input'));
+          if (!$data || !isset($data->to) || !isset($data->testo)) {
+            errore(400, "to e testo richiesti");
+          }
+          $decoded = verifica_jwt();
+          $from = $decoded->username ?? $decoded->sub ?? null;
+          if (!$from) errore(401, "Token senza username");
+
+          $to = trim($data->to);
+          if (!user_exists_db(db_connect(), $to)) {
+            errore(404, "Utente destinatario non trovato");
+          }
+
+          if ($from === $to) errore(400, "Non è possibile inviare un messaggio a se stessi");
+
+          $id = send_message_db(db_connect(), $from, $to, $data->testo, 'messaggio');
+          header("Content-Type: application/json; charset= utf-8");
+          $oggetto = new risposta("POST", "Messaggio inviato", ["success"=>true, "id"=>$id, "destinatario"=>$to]);
+          break;
+
+        case "Lamentela":
+          // invia una lamentela a un moderatore scelto automaticamente
+          $data = json_decode(file_get_contents('php://input'));
+          if (!$data || !isset($data->testo) || !isset($data->tipo)) {
+            errore(400, "tipo e testo richiesti");
+          }
+          $decoded = verifica_jwt();
+          $from = $decoded->username ?? $decoded->sub ?? null;
+          if (!$from) errore(401, "Token senza username");
+
+          $cands = moderatori_disponibili_db(db_connect());
+          if (empty($cands)) errore(500, "Nessun moderatore disponibile");
+          $moderatore = $cands[0]['username'];
+
+          $id = send_message_db(db_connect(), $from, $moderatore, $data->testo, 'lamentela');
+          header("Content-Type: application/json; charset= utf-8");
+          $oggetto = new risposta("POST", "Lamentela inviata", ["success"=>true, "id"=>$id]);
+          break;
 
 
         case "Login":
@@ -771,7 +1279,7 @@ if (is_null($parametri)){
             $data = json_decode(file_get_contents('php://input'));
             if (!isset($data->username, $data->password)) {
                 http_response_code(400);
-                die(json_encode(["error" => "Username o password mancanti"]));
+                die(json_encode(["error" => "username o password mancanti"]));
             }
             $jwt = login_utente_db(db_connect(), $data->username, $data->password);
             header("Content-Type: application/json; charset= utf-8");
@@ -794,19 +1302,19 @@ if (is_null($parametri)){
           break;
         
 
-        case "Partita":
-          if (!isset($parametri[1]))
-            errore(400,"player expected");
-          else { 
-            //inserisci partita
-            $partita["id"]=insert_partita(db_connect(),$parametri[1]);
-            switch($partita["id"]){
-              case -1: 	errore(400,"Player name error");
-            }
-            header("Content-Type: application/json; charset= utf-8");
-            $oggetto=new risposta("POST","New match created",$partita);
-          }
-          break;
+        // case "Partita":
+        //   if (!isset($parametri[1]))
+        //     errore(400,"player expected");
+        //   else { 
+        //     //inserisci partita
+        //     $partita["id"]=insert_partita(db_connect(),$parametri[1]);
+        //     switch($partita["id"]){
+        //       case -1: 	errore(400,"Player name error");
+        //     }
+        //     header("Content-Type: application/json; charset= utf-8");
+        //     $oggetto=new risposta("POST","New match created",$partita);
+        //   }
+        //   break;
 
         default:
             errore(400,"Request error");
@@ -906,33 +1414,34 @@ if (is_null($parametri)){
           $decoded = verifica_jwt();
           $username = $decoded->username ?? $decoded->sub ?? null;
           if (!$username) {
-            errore(400, "Username mancante nel token");
+            errore(400, "username mancante nel token");
           }
 
-          $ruoloUtente = ruolo_utente_db(db_connect(), $username);
-          if ($ruoloUtente === null) {
-            errore(404, "Ruolo utente non trovato");
-          }
+          $datiRuolo = permessi_validi_utente_db(db_connect(), $username);
 
           header("Content-Type: application/json; charset= utf-8");
-          $oggetto=new risposta("GET","Ruolo utente", ["username" => $username, "ruolo" => $ruoloUtente]);
+          $oggetto=new risposta("GET","Ruolo utente", [
+            "username" => $username,
+            "ruoli" => $datiRuolo["ruoli"],
+            "ruoloPrincipale" => $datiRuolo["ruoli"][0] ?? null
+          ]);
           break;
 
         case "PermessiUtente":
           $decoded = verifica_jwt();
           $username = $decoded->username ?? $decoded->sub ?? null;
           if (!$username) {
-            errore(400, "Username mancante nel token");
+            errore(400, "username mancante nel token");
           }
 
-          $ruoloUtente = ruolo_utente_db(db_connect(), $username);
-          if ($ruoloUtente === null) {
-            errore(404, "Ruolo utente non trovato");
-          }
-
-          $permessi = permessi_ruolo_db(db_connect(), $ruoloUtente);
+          $permessi = permessi_validi_utente_db(db_connect(), $username);
           header("Content-Type: application/json; charset= utf-8");
-          $oggetto=new risposta("GET","Permessi utente", ["username" => $username, "ruolo" => $ruoloUtente, "permessi" => $permessi]);
+          $oggetto=new risposta("GET","Permessi utente", [
+            "username" => $username,
+            "ruoli" => $permessi["ruoli"],
+            "permessi" => $permessi["privilegi"],
+            "restrizioni" => $permessi["restrizioni"]
+          ]);
           break;
 
         case "Dungeons":
@@ -969,6 +1478,81 @@ if (is_null($parametri)){
           header("Content-Type: application/json; charset= utf-8");
           $oggetto=new risposta("GET","dungeons filtrati",$dungeons);
           //var_dump($oggetto);
+          break;
+
+        case "TipiMostri":
+          $tipi = tipi_mostri_db(db_connect());
+          header("Content-Type: application/json; charset= utf-8");
+          $oggetto = new risposta("GET", "Tipi mostri", $tipi);
+          break;
+
+        case "Chats":
+          if (!isset($parametri[1])) errore(400, "username richiesto");
+          $username = $parametri[1];
+          $chats = get_chats_for_user_db(db_connect(), $username);
+          header("Content-Type: application/json; charset= utf-8");
+          $oggetto = new risposta("GET", "Chats utente", $chats);
+          break;
+
+        case "Chat":
+          if (!isset($parametri[1])) errore(400, "chat id richiesto");
+          $otherUser = $parametri[1];
+          if (!isset($parametri[2])) errore(400, "azione richiesta");
+          $azione = $parametri[2];
+          if ($azione === 'Messaggi'){
+            $decoded = verifica_jwt();
+            $username = $decoded->username ?? $decoded->sub ?? null;
+            if (!$username) errore(401, "Token senza username");
+            $msg = get_messages_between_users_db(db_connect(), $username, $otherUser);
+            header("Content-Type: application/json; charset= utf-8");
+            $oggetto = new risposta("GET", "Messaggi chat", $msg);
+            break;
+          } elseif ($azione === 'Visto'){
+            // mark as seen only if there are unseen messages
+            $decoded = verifica_jwt();
+            $username = $decoded->username ?? $decoded->sub ?? null;
+            if (!$username) errore(401, "Token senza username");
+            $count = count_unseen_in_chat_db(db_connect(), $username, $otherUser);
+            if ($count <= 0) errore(400, "Nessun messaggio non letto");
+            $affected = mark_messages_seen_db(db_connect(), $username, $otherUser);
+            header("Content-Type: application/json; charset= utf-8");
+            $oggetto = new risposta("POST", "Messaggi marcati come visti", ["count"=>$affected]);
+            break;
+          } else {
+            errore(400, "azione chat non riconosciuta");
+          }
+
+        case "Moderatori":
+          $mods = moderatori_disponibili_db(db_connect());
+          header("Content-Type: application/json; charset= utf-8");
+          $oggetto = new risposta("GET", "Moderatori disponibili", $mods);
+          break;
+
+        case "TemplateOggettiUtente":
+          if (!isset($parametri[1])) {
+            errore(400, "username richiesto");
+          }
+          $oggetti = template_oggetti_utente_db(db_connect(), $parametri[1]);
+          header("Content-Type: application/json; charset= utf-8");
+          $oggetto = new risposta("GET", "Oggetti utente", $oggetti);
+          break;
+
+        case "TemplateOggettiPubblici":
+          if (!isset($parametri[1])) {
+            errore(400, "username richiesto");
+          }
+          $oggetti = template_oggetti_pubblici_db(db_connect(), $parametri[1]);
+          header("Content-Type: application/json; charset= utf-8");
+          $oggetto = new risposta("GET", "Oggetti pubblici", $oggetti);
+          break;
+
+        case "MostriUtente":
+          if (!isset($parametri[1])) {
+            errore(400, "username richiesto");
+          }
+          $mostri = mostri_utente_db(db_connect(), $parametri[1]);
+          header("Content-Type: application/json; charset= utf-8");
+          $oggetto = new risposta("GET", "Mostri utente", $mostri);
           break;
 
         default:

@@ -1,5 +1,11 @@
 <?php
+/*
 
+
+//////////////////////////////////////////////// SE NON VA SPOSTA TUTTA LA CARTELLA IN "Jungleon" ////////////////////////////////////////////////////////////////////////////////
+
+
+*/
 //HEADERS
 header("Access-Control-Allow-Origin: http://localhost/rest-api-authentication-example/");
 header("Content-Type: application/json; charset=UTF-8");

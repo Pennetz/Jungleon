@@ -6,8 +6,8 @@ Vivi avventure uniche in un dungeon nella giungla: esplora, livella, trova ogget
 Competi con gli oggetti ottenuti nel dungeon o crea la tua avventura personalizzata: nemici, oggetti, stanze, storia; Tutto quello che vuoi, puoi modificarlo! (e condividerlo con tutto il mondo!)
 
 ## Descrizione
-Avventura testuale singolo giocatore ambientata in un dungeon nella giungla, basato sulla generazione procedurale delle stanze e con la possibilità di utilizzare le ricompense ottenute nel dungeon per competere con altri giocatori online. Con salvataggio dei dati online, tramite accesso con username e password. 
-È inoltre possibile creare dungeon personalizzati, aggiungendo stanze, nemici, personaggi o/e oggetti personalizzati. Questi dungeon possono essere pubblicati in modo tale che altri giocatori dal mondo possano giocarci.
+Avventura singolo giocatore ambientata in un dungeon nella giungla, basato sulla generazione procedurale delle stanze e con la possibilità di utilizzare le ricompense ottenute nel dungeon per competere con altri giocatori online. Con salvataggio dei dati online, tramite accesso con username e password. 
+È inoltre possibile creare dungeon personalizzati, aggiungendo stanze, nemici, personaggi o/e oggetti. Questi dungeon inoltre, possono essere pubblicati in modo tale che altri giocatori dal mondo possano giocarci!
 (Per la modalità 1Vs1 vengono conteggiati solo gli oggetti raccolti durante la partita ""Singolo giocatore"", tutti gli oggetti ed i livelli acquisiti durante le partite personalizzate non vengono considerati).
 
 [Documento con descrizione completa](https://docs.google.com/document/d/1Wnl9z4raB4nXzBMIiYCX1I2BUumF-2ufz1TnbKATa5o/edit?usp=sharing)

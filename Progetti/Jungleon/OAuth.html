@@ -1,0 +1,69 @@
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script>
+  function handleCredentialResponse(response) {
+    const idToken = response.credential; // JWT: header.payload.signature
+    console.log("ID TOKEN:", idToken);
+
+    const header = decodeJwtHeader(idToken);
+    const payload = decodeJwtPayload(idToken);
+    const signature = decodeJwtSignature(idToken);
+
+    console.log("HEADER:", header);
+    console.log("PAYLOAD:", payload);
+    console.log("SIGNATURE:", signature);
+
+    if (payload?.email) {
+      localStorage.setItem("userEmail", payload.email);
+    }
+
+    // output didattico
+    document.getElementById("jwt-header").textContent =
+      JSON.stringify(header, null, 2);
+
+    document.getElementById("jwt-payload").textContent =
+      JSON.stringify(payload, null, 2);
+
+    document.getElementById("jwt-signature").textContent =
+      signature;
+  }
+
+  function decodeJwtHeader(token) {
+    return decodeBase64UrlJson(token.split('.')[0]);
+  }
+
+  function decodeJwtPayload(token) {
+    return decodeBase64UrlJson(token.split('.')[1]);
+  }
+
+  function decodeJwtSignature(token) {
+    // la signature NON è JSON → la mostriamo così com’è
+    return token.split('.')[2];
+  }
+
+  function decodeBase64UrlJson(base64Url) {
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = base64 + '==='.slice((base64.length + 3) % 4);
+
+    const binary = atob(padded);
+    const bytes = Uint8Array.from(binary, c => c.charCodeAt(0));
+    const jsonText = new TextDecoder('utf-8').decode(bytes);
+
+    return JSON.parse(jsonText);
+  }
+</script>
+
+
+<div id="g_id_onload"
+     data-client_id="373334294352-9272k7p8reuhpfsk0ni3a82ak155mj5s.apps.googleusercontent.com"
+     data-callback="handleCredentialResponse">
+</div>
+<div class="g_id_signin" data-type="standard"></div>
+
+<pre><strong>JWT Header</strong>
+<code id="jwt-header"></code></pre>
+
+<pre><strong>JWT Payload</strong>
+<code id="jwt-payload"></code></pre>
+
+<pre><strong>JWT Signature (base64url)</strong>
+<code id="jwt-signature"></code></pre>

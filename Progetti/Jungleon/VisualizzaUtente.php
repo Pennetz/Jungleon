@@ -3,85 +3,24 @@ session_start();
 require_once __DIR__ . '/API/chiavi.php';
 
 if (!isset($_SESSION['username'])) {
-    header("location: index.php");
+    header("location: accedi.php");
     exit();
 }
 
-/**
- * Richiede ruolo e permessi all'API usando il token
- * @param string $token JWT token
- * @return array|null Dati utente (username, ruolo, permessi) o null se errore
- */
-function ruoloUtenteDaApi($token) {
-    if (!$token) {
-        return null;
-    }
-
-    $apiUrl = API_BASE_URL . "/Progetti/Jungleon/API/PermessiUtente";
-    
-    // Crea il context con header formattati correttamente
-    $context = stream_context_create([
-        'http' => [
-            'method' => 'GET',
-            'header' => "Content-Type: application/json\r\n" .
-                       "Authorization: Bearer " . $token . "\r\n",
-            'ignore_errors' => true
-        ]
-    ]);
-
-    $response = @file_get_contents($apiUrl, false, $context);
-    
-    if ($response === false) {
-        return null;
-    }
-
-    // Controlla lo status code dalla risposta HTTP
-    if (isset($http_response_header)) {
-        $status_line = $http_response_header[0] ?? '';
-        if (strpos($status_line, '200') === false) {
-            return null;
-        }
-    }
-
-    $responseData = json_decode($response, true);
-    if (!isset($responseData['data']['ruolo'], $responseData['data']['permessi'])) {
-        return null;
-    }
-
-    return [
-        'username' => $responseData['data']['username'] ?? null,
-        'ruolo' => $responseData['data']['ruolo'],
-        'permessi' => $responseData['data']['permessi']
-    ];
-}
-
-/**
- * Verifica il token JWT e legge il ruolo dal database
- * @return array|null Array con informazioni utente (username, ruolo, exp) o null se token non valido
- */
 function verificaTokeneEstraiRuolo() {
-    // Verifica se il token esiste in sessione
-    if (!isset($_SESSION['token'])) {
+    if (!isset($_SESSION['username'])) {
         return null;
     }
 
-    $token = $_SESSION['token'];
-    $info = ruoloUtenteDaApi($token);
-
-    if (!$info || !isset($info['ruolo'], $info['permessi'])) {
-        return null;
-    }
-
-    $username = $info['username'] ?? ($_SESSION['username'] ?? null);
-    if (!$username) {
-        return null;
-    }
+    $permessi = $_SESSION['privilegi'] ?? [];
+    $ruoli = $_SESSION['ruoli'] ?? [];
 
     return [
-        'username' => $username,
-        'ruolo' => $info['ruolo'],
-        'permessi' => $info['permessi'],
-        //'exp' => null,
+        'username' => $_SESSION['username'],
+        'ruoli' => $ruoli,
+        'ruoloPrincipale' => $ruoli[0] ?? 'Utente',
+        'permessi' => $permessi,
+        'restrizioni' => $_SESSION['restrizioni'] ?? [],
         'valido' => true
     ];
 }
@@ -182,7 +121,26 @@ function puoiFare($datiUtente, $azione = null) {
                         ?>
                         <div class="alert alert-info">
                             <strong>Benvenuto <?php echo htmlspecialchars($datiUtente['username']); ?>!</strong><br/>
-                            Ruolo: <span class="badge bg-primary"><?php echo htmlspecialchars($datiUtente['ruolo']); ?></span>
+                            Ruoli:
+                            <?php if (!empty($datiUtente['ruoli'])) { ?>
+                                <?php foreach ($datiUtente['ruoli'] as $ruolo) { ?>
+                                    <span class="badge bg-primary me-1"><?php echo htmlspecialchars($ruolo); ?></span>
+                                <?php } ?>
+                            <?php } else { ?>
+                                <span class="badge bg-secondary">Utente</span>
+                            <?php } ?>
+                        </div>
+
+                        <?php if (puoiFare($datiUtente, 'Crea Mostri')) { ?>
+                            <div class="d-flex justify-content-center my-4">
+                                <a href="creaMostro.php" class="btn btn-success btn-lg px-4 me-2">➕ Crea Mostro</a>
+                                <a href="VisualizzaMostri.php" class="btn btn-outline-success btn-lg px-4 me-2">📋 I miei mostri</a>
+                                <a href="chat.php" class="btn btn-primary btn-lg px-4">💬 Chat</a>
+                            </div>
+                        <?php } ?>
+
+                        <div class="d-flex justify-content-center my-2">
+                            <a href="contactModeratore.php" class="btn btn-warning">⚠️ Contatta Moderatore</a>
                         </div>
 
                         <!-- Mockup AZIONE 1: Visualizza (accessibile a tutti) -->
@@ -229,7 +187,7 @@ function puoiFare($datiUtente, $azione = null) {
 
                         <hr/>
                         <p class="text-muted">
-                            <small>ℹ️ I bottoni sopra sono un mockup. Il sistema verifica il ruolo dell'utente e mostra/nasconde le azioni in base ai permessi salvati nel database.</small>
+                            <small>ℹ️ Alcuni bottoni sopra riportati potrebbero essere un mockup. Il sistema verifica i ruoli dell'utente e mostra/nasconde le azioni in base ai permessi salvati nel database.</small>
                         </p>
                         <?php
                     } else {
@@ -252,6 +210,7 @@ function puoiFare($datiUtente, $azione = null) {
                 <div class="container mt-3">
                     <h6>Non hai un account?</h6>
                     <a href="register.php" class="btn btn-secondary">Registrati</a>
+                    <a href="mouseMqtt.php" class="btn btn-success">Tracking Mouse MQTT</a>
                     <a href="logout.php" class="btn btn-primary">Logout</a>
                 </div>
             <?php
