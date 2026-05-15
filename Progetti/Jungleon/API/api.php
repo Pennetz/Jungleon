@@ -5,6 +5,7 @@ die(json_encode($_SERVER));*/
 require __DIR__ . '/vendor/autoload.php';
 require __DIR__ . '/chiavi.php';
 require_once __DIR__ . '/../classi/Mostro.php';
+require_once __DIR__ . '/../classi/Oggetto.php';
 
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
@@ -307,6 +308,42 @@ function tipi_mostri_db($db){
   return $tipi;
 }
 
+function tipi_armature_db($db){
+  $result = $db->query("SELECT nome FROM TipiArmature ORDER BY nome ASC");
+  $tipi = [];
+  while ($row = $result->fetch_assoc()) {
+    $tipi[] = $row["nome"];
+  }
+  return $tipi;
+}
+
+function tipi_armi_db($db){
+  $result = $db->query("SELECT nome FROM TipiArmi ORDER BY nome ASC");
+  $tipi = [];
+  while ($row = $result->fetch_assoc()) {
+    $tipi[] = $row["nome"];
+  }
+  return $tipi;
+}
+
+function tipi_pozioni_db($db){
+  $result = $db->query("SELECT nome FROM TipiPozioni ORDER BY nome ASC");
+  $tipi = [];
+  while ($row = $result->fetch_assoc()) {
+    $tipi[] = $row["nome"];
+  }
+  return $tipi;
+}
+
+function tipi_reliquie_db($db){
+  $result = $db->query("SELECT nome FROM TipiReliquie ORDER BY nome ASC");
+  $tipi = [];
+  while ($row = $result->fetch_assoc()) {
+    $tipi[] = $row["nome"];
+  }
+  return $tipi;
+}
+
 function template_oggetti_utente_db($db, $username){
   $stmt = $db->prepare(
     "SELECT ID, nome, livello, descrizione, storia, valore, `rarità`, pubblico, dataCreazione " .
@@ -362,6 +399,292 @@ function mostri_utente_db($db, $username){
   }
   $stmt->close();
   return $mostri;
+}
+
+function mostro_db($db, $id){
+  $stmt = $db->prepare(
+    "SELECT ID, nome, livello, Utenti, descrizione, esperienzaData, oroDato, vita, resistenza, `velocità` AS velocita, forza, pubblico, dataCreazione " .
+    "FROM Mostri WHERE ID = ? LIMIT 1"
+  );
+  if (!$stmt) {
+    return [];
+  }
+
+  $stmt->bind_param("i", $id);
+  $stmt->execute();
+  $result = $stmt->get_result();
+  $mostro = $result->fetch_assoc() ?: [];
+  $stmt->close();
+
+  if (empty($mostro)) {
+    return [];
+  }
+
+  $stmt = $db->prepare("SELECT TipiMostri FROM TipiMostriMostri WHERE Mostri = ? ORDER BY TipiMostri ASC");
+  if ($stmt) {
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $tipiMostri = [];
+    while ($row = $result->fetch_assoc()) {
+      if (!empty($row['TipiMostri'])) {
+        $tipiMostri[] = $row['TipiMostri'];
+      }
+    }
+    $mostro['tipiMostri'] = $tipiMostri;
+    $stmt->close();
+  }
+
+  $stmt = $db->prepare("SELECT TemplateOggetti FROM TemplateOggettiMostri WHERE Mostri = ? ORDER BY TemplateOggetti ASC");
+  if ($stmt) {
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $oggetti = [];
+    while ($row = $result->fetch_assoc()) {
+      if (!empty($row['TemplateOggetti'])) {
+        $oggetti[] = (string)$row['TemplateOggetti'];
+      }
+    }
+    $mostro['oggetti'] = $oggetti;
+    $stmt->close();
+  }
+
+  return $mostro;
+}
+
+function boss_db($db, $id){
+  $stmt = $db->prepare(
+    "SELECT ID, nome, livello, fase, Utenti, descrizione, esperienzaData, oroDato, vita, resistenza, `velocità` AS velocita, forza, pubblico, dataCreazione " .
+    "FROM Boss WHERE ID = ? LIMIT 1"
+  );
+  if (!$stmt) {
+    return [];
+  }
+
+  $stmt->bind_param("i", $id);
+  $stmt->execute();
+  $result = $stmt->get_result();
+  $boss = $result->fetch_assoc() ?: [];
+  $stmt->close();
+
+  if (empty($boss)) {
+    return [];
+  }
+
+  $stmt = $db->prepare("SELECT TipiMostri FROM TipiMostriBoss WHERE Boss = ? ORDER BY TipiMostri ASC");
+  if ($stmt) {
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $tipiMostri = [];
+    while ($row = $result->fetch_assoc()) {
+      if (!empty($row['TipiMostri'])) {
+        $tipiMostri[] = $row['TipiMostri'];
+      }
+    }
+    $boss['tipiMostri'] = $tipiMostri;
+    $stmt->close();
+  }
+
+  $stmt = $db->prepare("SELECT TemplateOggetti FROM TemplateOggettiBoss WHERE Boss = ? ORDER BY TemplateOggetti ASC");
+  if ($stmt) {
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $oggetti = [];
+    while ($row = $result->fetch_assoc()) {
+      if (!empty($row['TemplateOggetti'])) {
+        $oggetti[] = (string)$row['TemplateOggetti'];
+      }
+    }
+    $boss['oggetti'] = $oggetti;
+    $stmt->close();
+  }
+
+  return $boss;
+}
+
+function aggiorna_mostro_db($db, Mostro $mostro, int $mostroId){
+  try {
+    $stmt = $db->prepare(
+      "UPDATE Mostri SET nome = ?, livello = ?, Utenti = ?, descrizione = ?, esperienzaData = ?, oroDato = ?, vita = ?, resistenza = ?, `velocità` = ?, forza = ?, pubblico = ? WHERE ID = ?"
+    );
+
+    [$nome, $livello, $utenti, $descrizione, $esperienzaData, $oroDato, $vita, $resistenza, $velocita, $forza, $pubblico] = $mostro->toDbValues();
+
+    $stmt->bind_param(
+      "sissiiiiiiii",
+      $nome,
+      $livello,
+      $utenti,
+      $descrizione,
+      $esperienzaData,
+      $oroDato,
+      $vita,
+      $resistenza,
+      $velocita,
+      $forza,
+      $pubblico,
+      $mostroId
+    );
+    $stmt->execute();
+
+    $stmt = $db->prepare("DELETE FROM TipiMostriMostri WHERE Mostri = ?");
+    $stmt->bind_param("i", $mostroId);
+    $stmt->execute();
+
+    $stmt = $db->prepare("DELETE FROM TemplateOggettiMostri WHERE Mostri = ?");
+    $stmt->bind_param("i", $mostroId);
+    $stmt->execute();
+
+    $tipiMostri = array_values(array_unique($mostro->tipiMostri ?? []));
+    foreach ($tipiMostri as $tipoMostro) {
+      if ($tipoMostro === null || $tipoMostro === '') {
+        continue;
+      }
+      $stmt = $db->prepare("INSERT INTO TipiMostriMostri (Mostri, TipiMostri) VALUES (?, ?)");
+      $stmt->bind_param("is", $mostroId, $tipoMostro);
+      $stmt->execute();
+    }
+
+    $oggetti = array_values(array_unique(array_merge($mostro->oggettiUtente ?? [], $mostro->oggettiPubblici ?? [])));
+    foreach ($oggetti as $oggettoId) {
+      if ($oggettoId === null || $oggettoId === '') {
+        continue;
+      }
+      $oggettoId = (int)$oggettoId;
+      $numero = 1;
+      $stmt = $db->prepare("INSERT INTO TemplateOggettiMostri (Mostri, TemplateOggetti, numero) VALUES (?, ?, ?)");
+      $stmt->bind_param("iii", $mostroId, $oggettoId, $numero);
+      $stmt->execute();
+    }
+
+    return ["success" => true, "id" => $mostroId, "nome" => $nome];
+  } catch (Exception $e) {
+    return ["success" => false, "error" => $e->getMessage()];
+  }
+}
+
+function aggiorna_boss_db($db, Mostro $mostro, int $bossId, int $fase){
+  try {
+    $stmt = $db->prepare(
+      "UPDATE Boss SET nome = ?, livello = ?, fase = ?, Utenti = ?, descrizione = ?, esperienzaData = ?, oroDato = ?, vita = ?, resistenza = ?, `velocità` = ?, forza = ?, pubblico = ? WHERE ID = ?"
+    );
+
+    [$nome, $livello, $utenti, $descrizione, $esperienzaData, $oroDato, $vita, $resistenza, $velocita, $forza, $pubblico] = $mostro->toDbValues();
+
+    $stmt->bind_param(
+      "siisiiiiiiiii",
+      $nome,
+      $livello,
+      $fase,
+      $utenti,
+      $descrizione,
+      $esperienzaData,
+      $oroDato,
+      $vita,
+      $resistenza,
+      $velocita,
+      $forza,
+      $pubblico,
+      $bossId
+    );
+    $stmt->execute();
+
+    $stmt = $db->prepare("DELETE FROM TipiMostriBoss WHERE Boss = ?");
+    $stmt->bind_param("i", $bossId);
+    $stmt->execute();
+
+    $stmt = $db->prepare("DELETE FROM TemplateOggettiBoss WHERE Boss = ?");
+    $stmt->bind_param("i", $bossId);
+    $stmt->execute();
+
+    $tipiMostri = array_values(array_unique($mostro->tipiMostri ?? []));
+    foreach ($tipiMostri as $tipoMostro) {
+      if ($tipoMostro === null || $tipoMostro === '') {
+        continue;
+      }
+      $stmt = $db->prepare("INSERT INTO TipiMostriBoss (Boss, TipiMostri) VALUES (?, ?)");
+      $stmt->bind_param("is", $bossId, $tipoMostro);
+      $stmt->execute();
+    }
+
+    $oggetti = array_values(array_unique(array_merge($mostro->oggettiUtente ?? [], $mostro->oggettiPubblici ?? [])));
+    foreach ($oggetti as $oggettoId) {
+      if ($oggettoId === null || $oggettoId === '') {
+        continue;
+      }
+      $oggettoId = (int)$oggettoId;
+      $numero = 1;
+      $stmt = $db->prepare("INSERT INTO TemplateOggettiBoss (Boss, TemplateOggetti, numero) VALUES (?, ?, ?)");
+      $stmt->bind_param("iii", $bossId, $oggettoId, $numero);
+      $stmt->execute();
+    }
+
+    return ["success" => true, "id" => $bossId, "nome" => $nome, "fase" => $fase];
+  } catch (Exception $e) {
+    return ["success" => false, "error" => $e->getMessage()];
+  }
+}
+
+function elimina_mostro_db($db, int $mostroId){
+  try {
+    $stmt = $db->prepare("DELETE FROM TipiMostriMostri WHERE Mostri = ?");
+    $stmt->bind_param("i", $mostroId);
+    $stmt->execute();
+
+    $stmt = $db->prepare("DELETE FROM TemplateOggettiMostri WHERE Mostri = ?");
+    $stmt->bind_param("i", $mostroId);
+    $stmt->execute();
+
+    $stmt = $db->prepare("DELETE FROM Mostri WHERE ID = ?");
+    $stmt->bind_param("i", $mostroId);
+    $stmt->execute();
+
+    return ["success" => true, "id" => $mostroId];
+  } catch (Exception $e) {
+    return ["success" => false, "error" => $e->getMessage()];
+  }
+}
+
+function elimina_boss_db($db, int $bossId){
+  try {
+    $stmt = $db->prepare("DELETE FROM TipiMostriBoss WHERE Boss = ?");
+    $stmt->bind_param("i", $bossId);
+    $stmt->execute();
+
+    $stmt = $db->prepare("DELETE FROM TemplateOggettiBoss WHERE Boss = ?");
+    $stmt->bind_param("i", $bossId);
+    $stmt->execute();
+
+    $stmt = $db->prepare("DELETE FROM Boss WHERE ID = ?");
+    $stmt->bind_param("i", $bossId);
+    $stmt->execute();
+
+    return ["success" => true, "id" => $bossId];
+  } catch (Exception $e) {
+    return ["success" => false, "error" => $e->getMessage()];
+  }
+}
+
+function boss_utente_db($db, $username){
+  $stmt = $db->prepare(
+    "SELECT ID, nome, livello, fase, Utenti, descrizione, esperienzaData, oroDato, vita, resistenza, `velocità` AS velocita, forza, pubblico, dataCreazione " .
+    "FROM Boss WHERE Utenti = ? ORDER BY dataCreazione DESC"
+  );
+  if (!$stmt) {
+    return [];
+  }
+  $stmt->bind_param("s", $username);
+  $stmt->execute();
+  $result = $stmt->get_result();
+  $boss = [];
+  while ($row = $result->fetch_assoc()) {
+    $boss[] = $row;
+  }
+  $stmt->close();
+  return $boss;
 }
 
 function user_exists_db($db, $username){
@@ -644,6 +967,128 @@ function crea_mostro_db($db, Mostro $mostro){
     return [
       "success" => true,
       "id" => $mostroId,
+      "nome" => $nome
+    ];
+  } catch (Exception $e) {
+    return [
+      "success" => false,
+      "error" => $e->getMessage()
+    ];
+  }
+}
+
+function crea_boss_db($db, Mostro $mostro, int $fase){
+  try {
+    $stmt = $db->prepare(
+      "INSERT INTO Boss (nome, livello, fase, Utenti, descrizione, esperienzaData, oroDato, vita, resistenza, `velocità`, forza, pubblico) " .
+      "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    );
+
+    [$nome, $livello, $utenti, $descrizione, $esperienzaData, $oroDato, $vita, $resistenza, $velocita, $forza, $pubblico] = $mostro->toDbValues();
+
+    $stmt->bind_param(
+      "siisiiiiiiii",
+      $nome,
+      $livello,
+      $fase,
+      $utenti,
+      $descrizione,
+      $esperienzaData,
+      $oroDato,
+      $vita,
+      $resistenza,
+      $velocita,
+      $forza,
+      $pubblico
+    );
+
+    $stmt->execute();
+
+    $bossId = $db->insert_id;
+
+    $tipiMostri = array_values(array_unique($mostro->tipiMostri ?? []));
+    foreach ($tipiMostri as $tipoMostro) {
+      if ($tipoMostro === null || $tipoMostro === '') {
+        continue;
+      }
+      $stmt = $db->prepare("INSERT INTO TipiMostriBoss (Boss, TipiMostri) VALUES (?, ?)");
+      $stmt->bind_param("is", $bossId, $tipoMostro);
+      $stmt->execute();
+    }
+
+    $oggetti = array_values(array_unique(array_merge($mostro->oggettiUtente ?? [], $mostro->oggettiPubblici ?? [])));
+    foreach ($oggetti as $oggettoId) {
+      if ($oggettoId === null || $oggettoId === '') {
+        continue;
+      }
+      $oggettoId = (int)$oggettoId;
+      $numero = 1;
+      $stmt = $db->prepare("INSERT INTO TemplateOggettiBoss (Boss, TemplateOggetti, numero) VALUES (?, ?, ?)");
+      $stmt->bind_param("iii", $bossId, $oggettoId, $numero);
+      $stmt->execute();
+    }
+
+    return [
+      "success" => true,
+      "id" => $bossId,
+      "nome" => $nome,
+      "fase" => $fase
+    ];
+  } catch (Exception $e) {
+    return [
+      "success" => false,
+      "error" => $e->getMessage()
+    ];
+  }
+}
+
+function crea_oggetto_db($db, Oggetto $oggetto){
+  try {
+    $stmt = $db->prepare(
+      "INSERT INTO TemplateOggetti (nome, livello, Utenti, descrizione, storia, valore, `rarità`, pubblico) " .
+      "VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+    );
+
+    [$nome, $livello, $utenti, $descrizione, $storia, $valore, $rarita, $pubblico] = $oggetto->toDbValues();
+
+    $stmt->bind_param(
+      "sisssisi",
+      $nome,
+      $livello,
+      $utenti,
+      $descrizione,
+      $storia,
+      $valore,
+      $rarita,
+      $pubblico
+    );
+
+    $stmt->execute();
+
+    $oggettoId = $db->insert_id;
+    $associazioni = [
+      ["tipi" => $oggetto->tipiArmature ?? [], "tabella" => "TipiArmatureTemplateOggetti", "colonna" => "TipiArmature"],
+      ["tipi" => $oggetto->tipiArmi ?? [], "tabella" => "TipiArmiTemplateOggetti", "colonna" => "TipiArmi"],
+      ["tipi" => $oggetto->tipiPozioni ?? [], "tabella" => "TipiPozioniTemplateOggetti", "colonna" => "TipiPozioni"],
+      ["tipi" => $oggetto->tipiReliquie ?? [], "tabella" => "TipiReliquieTemplateReliquieOggetti", "colonna" => "TipiReliquie"],
+    ];
+
+    foreach ($associazioni as $associazione) {
+      $tipi = array_values(array_unique($associazione["tipi"] ?? []));
+      foreach ($tipi as $tipo) {
+        if ($tipo === null || $tipo === '') {
+          continue;
+        }
+
+        $stmt = $db->prepare("INSERT INTO {$associazione['tabella']} ({$associazione['colonna']}, TemplateOggetti) VALUES (?, ?)");
+        $stmt->bind_param("si", $tipo, $oggettoId);
+        $stmt->execute();
+      }
+    }
+
+    return [
+      "success" => true,
+      "id" => $oggettoId,
       "nome" => $nome
     ];
   } catch (Exception $e) {
@@ -1232,6 +1677,86 @@ if (is_null($parametri)){
           $oggetto = new risposta("POST", "Monster created", $risposta);
           break;
 
+        case "Boss":
+          $data = json_decode(file_get_contents('php://input'));
+          if (!$data) {
+            errore(400, "JSON non valido");
+          }
+
+          $decoded = verifica_jwt();
+          $usernameToken = $decoded->username ?? $decoded->sub ?? null;
+          if (!$usernameToken) {
+            errore(401, "Token senza username");
+          }
+
+          if (!token_ha_privilegio($decoded, "Crea Mostri")) {
+            errore(403, "Privilegio Crea Mostri non disponibile");
+          }
+
+          if (isset($data->Utenti) && $data->Utenti !== $usernameToken) {
+            errore(403, "Utente non coerente con il token");
+          }
+
+          $data->Utenti = $usernameToken;
+
+          if (!empty($data->pubblico) && (int)$data->pubblico === 1 && !token_ha_privilegio($decoded, "Pubblicazione")) {
+            errore(403, "Privilegio Pubblicazione non disponibile");
+          }
+
+          if (!isset($data->fase)) {
+            errore(400, "Parametro fase mancante");
+          }
+          $fase = (int)$data->fase;
+          if ($fase < 1) {
+            errore(400, "Parametro fase non valido");
+          }
+
+          $mostro = Mostro::fromRequest($data);
+          $risposta = crea_boss_db(db_connect(), $mostro, $fase);
+          if (!$risposta["success"]) {
+            errore(500, $risposta["error"]);
+          }
+
+          header("Content-Type: application/json; charset= utf-8");
+          $oggetto = new risposta("POST", "Boss created", $risposta);
+          break;
+
+        case "Oggetto":
+          $data = json_decode(file_get_contents('php://input'));
+          if (!$data) {
+            errore(400, "JSON non valido");
+          }
+
+          $decoded = verifica_jwt();
+          $usernameToken = $decoded->username ?? $decoded->sub ?? null;
+          if (!$usernameToken) {
+            errore(401, "Token senza username");
+          }
+
+          if (!token_ha_privilegio($decoded, "Crea Oggetti")) {
+            errore(403, "Privilegio Crea Oggetti non disponibile");
+          }
+
+          if (isset($data->Utenti) && $data->Utenti !== $usernameToken) {
+            errore(403, "Utente non coerente con il token");
+          }
+
+          $data->Utenti = $usernameToken;
+
+          if (!empty($data->pubblico) && (int)$data->pubblico === 1 && !token_ha_privilegio($decoded, "Pubblicazione")) {
+            errore(403, "Privilegio Pubblicazione non disponibile");
+          }
+
+          $oggettoRequest = Oggetto::fromRequest($data);
+          $risposta = crea_oggetto_db(db_connect(), $oggettoRequest);
+          if (!$risposta["success"]) {
+            errore(500, $risposta["error"]);
+          }
+
+          header("Content-Type: application/json; charset= utf-8");
+          $oggetto = new risposta("POST", "Object created", $risposta);
+          break;
+
         case "Messaggi":
           // invia un messaggio a un altro utente
           $data = json_decode(file_get_contents('php://input'));
@@ -1381,6 +1906,173 @@ if (is_null($parametri)){
       else
           errore(400,"Request error");*/          
 
+    } else if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
+      if (!isset($parametri[0])) {
+        errore(400, "something expected");
+      }
+
+      switch ($parametri[0]) {
+        case "Mostro":
+          $data = json_decode(file_get_contents('php://input'));
+          if (!$data || !isset($data->id)) {
+            errore(400, "ID mostro richiesto");
+          }
+
+          $decoded = verifica_jwt();
+          $usernameToken = $decoded->username ?? $decoded->sub ?? null;
+          if (!$usernameToken) {
+            errore(401, "Token senza username");
+          }
+
+          if (!token_ha_privilegio($decoded, "Crea Mostri")) {
+            errore(403, "Privilegio Crea Mostri non disponibile");
+          }
+
+          $esistente = mostro_db(db_connect(), (int)$data->id);
+          if (empty($esistente)) {
+            errore(404, "Mostro non trovato");
+          }
+          if (($esistente['Utenti'] ?? null) !== $usernameToken) {
+            errore(403, "Non puoi modificare questo mostro");
+          }
+
+          if (isset($data->Utenti) && $data->Utenti !== $usernameToken) {
+            errore(403, "Utente non coerente con il token");
+          }
+
+          $data->Utenti = $usernameToken;
+
+          if (!empty($data->pubblico) && (int)$data->pubblico === 1 && !token_ha_privilegio($decoded, "Pubblicazione")) {
+            errore(403, "Privilegio Pubblicazione non disponibile");
+          }
+
+          $mostro = Mostro::fromRequest($data);
+          $risposta = aggiorna_mostro_db(db_connect(), $mostro, (int)$data->id);
+          if (!$risposta['success']) {
+            errore(500, $risposta['error']);
+          }
+
+          header("Content-Type: application/json; charset= utf-8");
+          $oggetto = new risposta("PUT", "Monster updated", $risposta);
+          break;
+
+        case "Boss":
+          $data = json_decode(file_get_contents('php://input'));
+          if (!$data || !isset($data->id)) {
+            errore(400, "ID boss richiesto");
+          }
+
+          $decoded = verifica_jwt();
+          $usernameToken = $decoded->username ?? $decoded->sub ?? null;
+          if (!$usernameToken) {
+            errore(401, "Token senza username");
+          }
+
+          if (!token_ha_privilegio($decoded, "Crea Mostri")) {
+            errore(403, "Privilegio Crea Mostri non disponibile");
+          }
+
+          $esistente = boss_db(db_connect(), (int)$data->id);
+          if (empty($esistente)) {
+            errore(404, "Boss non trovato");
+          }
+          if (($esistente['Utenti'] ?? null) !== $usernameToken) {
+            errore(403, "Non puoi modificare questo boss");
+          }
+
+          if (isset($data->Utenti) && $data->Utenti !== $usernameToken) {
+            errore(403, "Utente non coerente con il token");
+          }
+
+          $data->Utenti = $usernameToken;
+
+          if (!empty($data->pubblico) && (int)$data->pubblico === 1 && !token_ha_privilegio($decoded, "Pubblicazione")) {
+            errore(403, "Privilegio Pubblicazione non disponibile");
+          }
+
+          if (!isset($data->fase)) {
+            errore(400, "Parametro fase mancante");
+          }
+          $fase = (int)$data->fase;
+          if ($fase < 1) {
+            errore(400, "Parametro fase non valido");
+          }
+
+          $mostro = Mostro::fromRequest($data);
+          $risposta = aggiorna_boss_db(db_connect(), $mostro, (int)$data->id, $fase);
+          if (!$risposta['success']) {
+            errore(500, $risposta['error']);
+          }
+
+          header("Content-Type: application/json; charset= utf-8");
+          $oggetto = new risposta("PUT", "Boss updated", $risposta);
+          break;
+
+        default:
+          errore(400, "Request error");
+          break;
+      }
+    } else if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
+      if (!isset($parametri[0])) {
+        errore(400, "something expected");
+      }
+
+      $data = json_decode(file_get_contents('php://input'));
+      if (!$data || !isset($data->id)) {
+        errore(400, "ID richiesto");
+      }
+
+      $decoded = verifica_jwt();
+      $usernameToken = $decoded->username ?? $decoded->sub ?? null;
+      if (!$usernameToken) {
+        errore(401, "Token senza username");
+      }
+
+      if (!token_ha_privilegio($decoded, "Crea Mostri")) {
+        errore(403, "Privilegio Crea Mostri non disponibile");
+      }
+
+      switch ($parametri[0]) {
+        case "Mostro":
+          $esistente = mostro_db(db_connect(), (int)$data->id);
+          if (empty($esistente)) {
+            errore(404, "Mostro non trovato");
+          }
+          if (($esistente['Utenti'] ?? null) !== $usernameToken) {
+            errore(403, "Non puoi eliminare questo mostro");
+          }
+
+          $risposta = elimina_mostro_db(db_connect(), (int)$data->id);
+          if (!$risposta['success']) {
+            errore(500, $risposta['error']);
+          }
+
+          header("Content-Type: application/json; charset= utf-8");
+          $oggetto = new risposta("DELETE", "Monster deleted", $risposta);
+          break;
+
+        case "Boss":
+          $esistente = boss_db(db_connect(), (int)$data->id);
+          if (empty($esistente)) {
+            errore(404, "Boss non trovato");
+          }
+          if (($esistente['Utenti'] ?? null) !== $usernameToken) {
+            errore(403, "Non puoi eliminare questo boss");
+          }
+
+          $risposta = elimina_boss_db(db_connect(), (int)$data->id);
+          if (!$risposta['success']) {
+            errore(500, $risposta['error']);
+          }
+
+          header("Content-Type: application/json; charset= utf-8");
+          $oggetto = new risposta("DELETE", "Boss deleted", $risposta);
+          break;
+
+        default:
+          errore(400, "Request error");
+          break;
+      }
     } else if ($_SERVER['REQUEST_METHOD'] === 'GET') {                                                              #modificato!!!!!!!!!!!!!!!!!!!!!!!!!!!
       if (!isset($parametri[0]))
         errore(400,"something expected");
@@ -1486,6 +2178,30 @@ if (is_null($parametri)){
           $oggetto = new risposta("GET", "Tipi mostri", $tipi);
           break;
 
+        case "Mostro":
+          if (!isset($parametri[1])) {
+            errore(400, "ID mostro richiesto");
+          }
+          $mostro = mostro_db(db_connect(), (int)$parametri[1]);
+          if (empty($mostro)) {
+            errore(404, "Mostro non trovato");
+          }
+          header("Content-Type: application/json; charset= utf-8");
+          $oggetto = new risposta("GET", "Mostro richiesto", $mostro);
+          break;
+
+        case "Boss":
+          if (!isset($parametri[1])) {
+            errore(400, "ID boss richiesto");
+          }
+          $boss = boss_db(db_connect(), (int)$parametri[1]);
+          if (empty($boss)) {
+            errore(404, "Boss non trovato");
+          }
+          header("Content-Type: application/json; charset= utf-8");
+          $oggetto = new risposta("GET", "Boss richiesto", $boss);
+          break;
+
         case "Chats":
           if (!isset($parametri[1])) errore(400, "username richiesto");
           $username = $parametri[1];
@@ -1546,6 +2262,30 @@ if (is_null($parametri)){
           $oggetto = new risposta("GET", "Oggetti pubblici", $oggetti);
           break;
 
+        case "TipiArmature":
+          $tipi = tipi_armature_db(db_connect());
+          header("Content-Type: application/json; charset= utf-8");
+          $oggetto = new risposta("GET", "Tipi armature", $tipi);
+          break;
+
+        case "TipiArmi":
+          $tipi = tipi_armi_db(db_connect());
+          header("Content-Type: application/json; charset= utf-8");
+          $oggetto = new risposta("GET", "Tipi armi", $tipi);
+          break;
+
+        case "TipiPozioni":
+          $tipi = tipi_pozioni_db(db_connect());
+          header("Content-Type: application/json; charset= utf-8");
+          $oggetto = new risposta("GET", "Tipi pozioni", $tipi);
+          break;
+
+        case "TipiReliquie":
+          $tipi = tipi_reliquie_db(db_connect());
+          header("Content-Type: application/json; charset= utf-8");
+          $oggetto = new risposta("GET", "Tipi reliquie", $tipi);
+          break;
+
         case "MostriUtente":
           if (!isset($parametri[1])) {
             errore(400, "username richiesto");
@@ -1553,6 +2293,15 @@ if (is_null($parametri)){
           $mostri = mostri_utente_db(db_connect(), $parametri[1]);
           header("Content-Type: application/json; charset= utf-8");
           $oggetto = new risposta("GET", "Mostri utente", $mostri);
+          break;
+
+        case "BossUtente":
+          if (!isset($parametri[1])) {
+            errore(400, "username richiesto");
+          }
+          $boss = boss_utente_db(db_connect(), $parametri[1]);
+          header("Content-Type: application/json; charset= utf-8");
+          $oggetto = new risposta("GET", "Boss utente", $boss);
           break;
 
         default:

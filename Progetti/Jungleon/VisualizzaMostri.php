@@ -37,6 +37,7 @@ function chiamaApiGet(string $path): array {
 }
 
 $mostri = chiamaApiGet('MostriUtente/' . rawurlencode($_SESSION['username']));
+$boss = chiamaApiGet('BossUtente/' . rawurlencode($_SESSION['username']));
 $messaggio = $_GET['messaggio'] ?? null;
 $errore = $_GET['errore'] ?? null;
 ?>
@@ -88,12 +89,13 @@ $errore = $_GET['errore'] ?? null;
                                 <th>Forza</th>
                                 <th>Pubblico</th>
                                 <th>Data creazione</th>
+                                <th>Azioni</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php if (empty($mostri)): ?>
                                 <tr>
-                                    <td colspan="10" class="text-center text-muted py-4">Nessun mostro creato ancora.</td>
+                                    <td colspan="11" class="text-center text-muted py-4">Nessun mostro creato ancora.</td>
                                 </tr>
                             <?php else: ?>
                                 <?php foreach ($mostri as $mostro): ?>
@@ -113,6 +115,86 @@ $errore = $_GET['errore'] ?? null;
                                         <td><?php echo htmlspecialchars((string)($mostro['forza'] ?? '')); ?></td>
                                         <td><?php echo !empty($mostro['pubblico']) ? 'Sì' : 'No'; ?></td>
                                         <td><?php echo htmlspecialchars((string)($mostro['dataCreazione'] ?? '')); ?></td>
+                                        <td>
+                                            <div class="d-flex gap-2 flex-wrap">
+                                                <a class="btn btn-sm btn-outline-primary" href="creaMostro.php?tipo=mostro&amp;id=<?php echo htmlspecialchars((string)($mostro['ID'] ?? 0)); ?>">Modifica</a>
+                                                <form action="eliminaCreatura.php" method="post" onsubmit="return confirm('Vuoi eliminare questo mostro?');">
+                                                    <input type="hidden" name="tipoCreatura" value="mostro">
+                                                    <input type="hidden" name="idCreatura" value="<?php echo htmlspecialchars((string)($mostro['ID'] ?? 0)); ?>">
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger">Elimina</button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mt-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h2 class="h5 mb-1">I miei boss</h2>
+                        <p class="text-muted mb-0">Elenco dei boss creati da <?php echo htmlspecialchars($_SESSION['username']); ?>.</p>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-striped align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>Livello</th>
+                                <th>Fase</th>
+                                <th>Esperienza</th>
+                                <th>Oro</th>
+                                <th>Vita</th>
+                                <th>Resistenza</th>
+                                <th>Velocita</th>
+                                <th>Forza</th>
+                                <th>Pubblico</th>
+                                <th>Data creazione</th>
+                                <th>Azioni</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php if (empty($boss)): ?>
+                                <tr>
+                                    <td colspan="12" class="text-center text-muted py-4">Nessun boss creato ancora.</td>
+                                </tr>
+                            <?php else: ?>
+                                <?php foreach ($boss as $creatoBoss): ?>
+                                    <tr>
+                                        <td>
+                                            <strong><?php echo htmlspecialchars($creatoBoss['nome'] ?? ''); ?></strong>
+                                            <?php if (!empty($creatoBoss['descrizione'])): ?>
+                                                <div class="text-muted small"><?php echo htmlspecialchars($creatoBoss['descrizione']); ?></div>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td><?php echo htmlspecialchars((string)($creatoBoss['livello'] ?? '')); ?></td>
+                                        <td><?php echo htmlspecialchars((string)($creatoBoss['fase'] ?? '')); ?></td>
+                                        <td><?php echo htmlspecialchars((string)($creatoBoss['esperienzaData'] ?? '')); ?></td>
+                                        <td><?php echo htmlspecialchars((string)($creatoBoss['oroDato'] ?? '')); ?></td>
+                                        <td><?php echo htmlspecialchars((string)($creatoBoss['vita'] ?? '')); ?></td>
+                                        <td><?php echo htmlspecialchars((string)($creatoBoss['resistenza'] ?? '')); ?></td>
+                                        <td><?php echo htmlspecialchars((string)($creatoBoss['velocita'] ?? '')); ?></td>
+                                        <td><?php echo htmlspecialchars((string)($creatoBoss['forza'] ?? '')); ?></td>
+                                        <td><?php echo !empty($creatoBoss['pubblico']) ? 'Sì' : 'No'; ?></td>
+                                        <td><?php echo htmlspecialchars((string)($creatoBoss['dataCreazione'] ?? '')); ?></td>
+                                        <td>
+                                            <div class="d-flex gap-2 flex-wrap">
+                                                <a class="btn btn-sm btn-outline-primary" href="creaMostro.php?tipo=boss&amp;id=<?php echo htmlspecialchars((string)($creatoBoss['ID'] ?? 0)); ?>">Modifica</a>
+                                                <form action="eliminaCreatura.php" method="post" onsubmit="return confirm('Vuoi eliminare questo boss?');">
+                                                    <input type="hidden" name="tipoCreatura" value="boss">
+                                                    <input type="hidden" name="idCreatura" value="<?php echo htmlspecialchars((string)($creatoBoss['ID'] ?? 0)); ?>">
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger">Elimina</button>
+                                                </form>
+                                            </div>
+                                        </td>
                                     </tr>
                                 <?php endforeach; ?>
                             <?php endif; ?>

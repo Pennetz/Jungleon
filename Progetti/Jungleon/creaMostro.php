@@ -46,6 +46,38 @@ $puoPubblicare = haPermesso('Pubblicazione');
 $tipiMostri = chiamaApiGet('TipiMostri');
 $oggettiUtente = chiamaApiGet('TemplateOggettiUtente/' . rawurlencode($_SESSION['username']));
 $oggettiPubblici = chiamaApiGet('TemplateOggettiPubblici/' . rawurlencode($_SESSION['username']));
+$tipoCreatura = strtolower((string)($_GET['tipo'] ?? 'mostro'));
+$idCreatura = (int)($_GET['id'] ?? 0);
+$creaturaEsistente = [];
+
+if ($idCreatura > 0 && in_array($tipoCreatura, ['mostro', 'boss'], true)) {
+    $creaturaEsistente = chiamaApiGet(($tipoCreatura === 'boss' ? 'Boss/' : 'Mostro/') . $idCreatura);
+    if (empty($creaturaEsistente)) {
+        $tipoCreatura = 'mostro';
+        $idCreatura = 0;
+    }
+}
+
+$isEdit = !empty($creaturaEsistente);
+$isBoss = $isEdit ? ($tipoCreatura === 'boss') : false;
+$titoloPagina = $isEdit ? ($isBoss ? 'Modifica Boss' : 'Modifica Mostro') : 'Crea Mostro';
+$descrizionePagina = $isEdit
+    ? ($isBoss ? 'Aggiorna i dati del boss selezionato.' : 'Aggiorna i dati del mostro selezionato.')
+    : 'Compila i dati base e scegli tipologie e oggetti associati.';
+$bottoneInvio = $isEdit ? 'Salva modifiche' : 'Crea mostro';
+$selezionatiTipi = array_map('strval', $creaturaEsistente['tipiMostri'] ?? []);
+$selezionatiOggetti = array_map('strval', $creaturaEsistente['oggetti'] ?? []);
+$valoreNome = $creaturaEsistente['nome'] ?? '';
+$valoreLivello = $creaturaEsistente['livello'] ?? '';
+$valoreDescrizione = $creaturaEsistente['descrizione'] ?? '';
+$valoreEsperienza = $creaturaEsistente['esperienzaData'] ?? '';
+$valoreOro = $creaturaEsistente['oroDato'] ?? '';
+$valoreVita = $creaturaEsistente['vita'] ?? '';
+$valoreResistenza = $creaturaEsistente['resistenza'] ?? '';
+$valoreVelocita = $creaturaEsistente['velocita'] ?? '';
+$valoreForza = $creaturaEsistente['forza'] ?? '';
+$valoreFase = $creaturaEsistente['fase'] ?? '';
+$valorePubblico = !empty($creaturaEsistente['pubblico']);
 $errore = $_GET['errore'] ?? null;
 $messaggio = $_GET['messaggio'] ?? null;
 ?>
@@ -54,15 +86,15 @@ $messaggio = $_GET['messaggio'] ?? null;
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Crea Mostro</title>
+    <title><?php echo htmlspecialchars($titoloPagina); ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous" />
 </head>
 <body class="bg-light">
     <div class="container py-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
-                <h1 class="h3 mb-1">Crea Mostro</h1>
-                <p class="text-muted mb-0">Compila i dati base e scegli tipologie e oggetti associati.</p>
+                <h1 class="h3 mb-1"><?php echo htmlspecialchars($titoloPagina); ?></h1>
+                <p class="text-muted mb-0"><?php echo htmlspecialchars($descrizionePagina); ?></p>
             </div>
             <a href="VisualizzaUtente.php" class="btn btn-outline-secondary">Torna indietro</a>
         </div>
@@ -78,18 +110,20 @@ $messaggio = $_GET['messaggio'] ?? null;
         <div class="card shadow-sm">
             <div class="card-body">
                 <form action="salvaMostro.php" method="post" class="row g-3">
+                    <input type="hidden" name="idCreatura" value="<?php echo htmlspecialchars((string)$idCreatura); ?>">
+                    <input type="hidden" name="tipoCreatura" id="tipoCreatura" value="<?php echo htmlspecialchars($isBoss ? 'boss' : 'mostro'); ?>">
                     <div class="col-md-6">
                         <label for="nome" class="form-label">Nome</label>
-                        <input type="text" class="form-control" id="nome" name="nome" required>
+                        <input type="text" class="form-control" id="nome" name="nome" value="<?php echo htmlspecialchars((string)$valoreNome); ?>" required>
                     </div>
                     <div class="col-md-3">
                         <label for="livello" class="form-label">Livello</label>
-                        <input type="number" class="form-control" id="livello" name="livello" min="1" required>
+                        <input type="number" class="form-control" id="livello" name="livello" min="1" value="<?php echo htmlspecialchars((string)$valoreLivello); ?>" required>
                     </div>
                     <div class="col-md-3">
                         <label for="pubblico" class="form-label d-block">Visibilità</label>
                         <div class="form-check form-switch mt-2">
-                            <input class="form-check-input" type="checkbox" role="switch" id="pubblico" name="pubblico" value="1" <?php echo $puoPubblicare ? '' : 'disabled'; ?>>
+                            <input class="form-check-input" type="checkbox" role="switch" id="pubblico" name="pubblico" value="1" <?php echo $valorePubblico ? 'checked' : ''; ?> <?php echo $puoPubblicare ? '' : 'disabled'; ?>>
                             <label class="form-check-label" for="pubblico">Pubblico</label>
                         </div>
                         <?php if (!$puoPubblicare): ?>
@@ -97,42 +131,59 @@ $messaggio = $_GET['messaggio'] ?? null;
                         <?php endif; ?>
                     </div>
 
+                    <div class="col-md-3">
+                        <label for="boss" class="form-label d-block">Tipo creatura</label>
+                        <div class="form-check form-switch mt-2">
+                            <input class="form-check-input" type="checkbox" role="switch" id="boss" name="boss" value="1" <?php echo $isBoss ? 'checked' : ''; ?> <?php echo $isEdit ? 'disabled' : ''; ?>>
+                            <label class="form-check-label" for="boss">Boss</label>
+                        </div>
+                        <?php if ($isEdit): ?>
+                            <div class="form-text">La tipologia non può essere cambiata durante la modifica.</div>
+                        <?php endif; ?>
+                    </div>
+
+                    <div class="col-md-3" id="faseWrapper" style="display:<?php echo $isBoss ? '' : 'none'; ?>;">
+                        <label for="fase" class="form-label">Fase (solo Boss)</label>
+                        <input type="number" class="form-control" id="fase" name="fase" min="1" value="<?php echo htmlspecialchars((string)$valoreFase); ?>">
+                        <div class="form-text">Inserisci la fase del Boss.</div>
+                    </div>
+
                     <div class="col-12">
                         <label for="descrizione" class="form-label">Descrizione</label>
-                        <textarea class="form-control" id="descrizione" name="descrizione" rows="3"></textarea>
+                        <textarea class="form-control" id="descrizione" name="descrizione" rows="3"><?php echo htmlspecialchars((string)$valoreDescrizione); ?></textarea>
                     </div>
 
                     <div class="col-md-4">
                         <label for="esperienzaData" class="form-label">Esperienza data</label>
-                        <input type="number" class="form-control" id="esperienzaData" name="esperienzaData" min="0" required>
+                        <input type="number" class="form-control" id="esperienzaData" name="esperienzaData" min="0" value="<?php echo htmlspecialchars((string)$valoreEsperienza); ?>" required>
                     </div>
                     <div class="col-md-4">
                         <label for="oroDato" class="form-label">Oro dato</label>
-                        <input type="number" class="form-control" id="oroDato" name="oroDato" min="0" required>
+                        <input type="number" class="form-control" id="oroDato" name="oroDato" min="0" value="<?php echo htmlspecialchars((string)$valoreOro); ?>" required>
                     </div>
                     <div class="col-md-4">
                         <label for="vita" class="form-label">Vita</label>
-                        <input type="number" class="form-control" id="vita" name="vita" min="1" required>
+                        <input type="number" class="form-control" id="vita" name="vita" min="1" value="<?php echo htmlspecialchars((string)$valoreVita); ?>" required>
                     </div>
 
                     <div class="col-md-4">
                         <label for="resistenza" class="form-label">Resistenza</label>
-                        <input type="number" class="form-control" id="resistenza" name="resistenza" min="0" required>
+                        <input type="number" class="form-control" id="resistenza" name="resistenza" min="0" value="<?php echo htmlspecialchars((string)$valoreResistenza); ?>" required>
                     </div>
                     <div class="col-md-4">
                         <label for="velocita" class="form-label">Velocita</label>
-                        <input type="number" class="form-control" id="velocita" name="velocita" min="0" required>
+                        <input type="number" class="form-control" id="velocita" name="velocita" min="0" value="<?php echo htmlspecialchars((string)$valoreVelocita); ?>" required>
                     </div>
                     <div class="col-md-4">
                         <label for="forza" class="form-label">Forza</label>
-                        <input type="number" class="form-control" id="forza" name="forza" min="0" required>
+                        <input type="number" class="form-control" id="forza" name="forza" min="0" value="<?php echo htmlspecialchars((string)$valoreForza); ?>" required>
                     </div>
 
                     <div class="col-md-4">
                         <label for="tipiMostri" class="form-label">Tipi mostri</label>
                         <select class="form-select" id="tipiMostri" name="tipiMostri[]" multiple size="8">
                             <?php foreach ($tipiMostri as $tipoMostro): ?>
-                                <option value="<?php echo htmlspecialchars((string)$tipoMostro); ?>"><?php echo htmlspecialchars((string)$tipoMostro); ?></option>
+                                <option value="<?php echo htmlspecialchars((string)$tipoMostro); ?>" <?php echo in_array((string)$tipoMostro, $selezionatiTipi, true) ? 'selected' : ''; ?>><?php echo htmlspecialchars((string)$tipoMostro); ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
@@ -141,7 +192,7 @@ $messaggio = $_GET['messaggio'] ?? null;
                         <label for="oggettiUtente" class="form-label">Oggetti tuoi</label>
                         <select class="form-select" id="oggettiUtente" name="oggettiUtente[]" multiple size="8">
                             <?php foreach ($oggettiUtente as $oggetto): ?>
-                                <option value="<?php echo htmlspecialchars((string)$oggetto['ID']); ?>">
+                                <option value="<?php echo htmlspecialchars((string)$oggetto['ID']); ?>" <?php echo in_array((string)$oggetto['ID'], $selezionatiOggetti, true) ? 'selected' : ''; ?>>
                                     <?php echo htmlspecialchars($oggetto['nome'] . ' - livello ' . $oggetto['livello']); ?>
                                 </option>
                             <?php endforeach; ?>
@@ -152,7 +203,7 @@ $messaggio = $_GET['messaggio'] ?? null;
                         <label for="oggettiPubblici" class="form-label">Oggetti pubblici</label>
                         <select class="form-select" id="oggettiPubblici" name="oggettiPubblici[]" multiple size="8">
                             <?php foreach ($oggettiPubblici as $oggetto): ?>
-                                <option value="<?php echo htmlspecialchars((string)$oggetto['ID']); ?>">
+                                <option value="<?php echo htmlspecialchars((string)$oggetto['ID']); ?>" <?php echo in_array((string)$oggetto['ID'], $selezionatiOggetti, true) ? 'selected' : ''; ?>>
                                     <?php echo htmlspecialchars($oggetto['nome'] . ' - livello ' . $oggetto['livello']); ?>
                                 </option>
                             <?php endforeach; ?>
@@ -161,7 +212,7 @@ $messaggio = $_GET['messaggio'] ?? null;
 
                     <div class="col-12 d-flex justify-content-end gap-2">
                         <a href="VisualizzaUtente.php" class="btn btn-secondary">Annulla</a>
-                        <button type="submit" class="btn btn-success">Crea mostro</button>
+                        <button type="submit" class="btn btn-success"><?php echo htmlspecialchars($bottoneInvio); ?></button>
                     </div>
                 </form>
             </div>
@@ -169,6 +220,28 @@ $messaggio = $_GET['messaggio'] ?? null;
     </div>
 
     <script>
+        const bossSwitch = document.getElementById('boss');
+        const faseWrapper = document.getElementById('faseWrapper');
+        const faseInput = document.getElementById('fase');
+        const tipoCreatura = document.getElementById('tipoCreatura');
+
+        function aggiornaCampoFase() {
+            const isBoss = bossSwitch && bossSwitch.checked;
+            faseWrapper.style.display = isBoss ? '' : 'none';
+            faseInput.required = !!isBoss;
+            if (tipoCreatura && bossSwitch && !bossSwitch.disabled) {
+                tipoCreatura.value = isBoss ? 'boss' : 'mostro';
+            }
+            if (!isBoss) {
+                faseInput.value = '';
+            }
+        }
+
+        if (bossSwitch) {
+            bossSwitch.addEventListener('change', aggiornaCampoFase);
+            aggiornaCampoFase();
+        }
+
         document.querySelectorAll('select[multiple]').forEach(function(select) {
             select.addEventListener('mousedown', function(event) {
                 const option = event.target;

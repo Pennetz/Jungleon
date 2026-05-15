@@ -93,6 +93,7 @@ CREATE TABLE `Privilegi` (
 INSERT INTO `Privilegi` (`nome`, `tipo`, `descrizione`, `dataCreazione`) VALUES
 ('Accettazione lamentele', 'Moderazione utenza', 'Permette di visionare i messaggi di lamentele degli utenti', '2026-05-15 02:48:50'),
 ('Crea Mostri', 'Creazione', 'permette di creare dei mostri', '2026-05-15 01:02:50'),
+('Crea Oggetti', 'Creazione', 'permette di creare degli oggetti', '2026-05-15 02:50:00'),
 ('Pubblicazione', 'Condivisione', 'permette di pubblicare le proprie creazioni (sia che siano oggetti, che dungeon, che stanze, ecc..)', '2026-05-15 01:04:02');
 
 -- --------------------------------------------------------
@@ -114,6 +115,7 @@ CREATE TABLE `Privilegi_Ruoli` (
 INSERT INTO `Privilegi_Ruoli` (`Privilegi`, `Ruoli`, `dataAssegnazione`) VALUES
 ('Accettazione lamentele', 'Moderatore', '2026-05-15 02:49:03'),
 ('Crea Mostri', 'UtenteBase', '2026-05-15 01:04:47'),
+('Crea Oggetti', 'UtenteBase', '2026-05-15 02:50:05'),
 ('Pubblicazione', 'UtenteBase', '2026-05-15 01:04:52');
 
 -- --------------------------------------------------------

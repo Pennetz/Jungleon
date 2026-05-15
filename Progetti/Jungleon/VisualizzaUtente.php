@@ -40,6 +40,22 @@ function puoiFare($datiUtente, $azione = null) {
     }
 
     $permessi = $datiUtente['permessi'] ?? [];
+    $restrizioni = $datiUtente['restrizioni'] ?? [];
+
+    $estraiNomi = static function (array $lista): array {
+        $nomi = [];
+        foreach ($lista as $item) {
+            if (is_array($item) && isset($item['nome'])) {
+                $nomi[] = $item['nome'];
+            } elseif (is_string($item)) {
+                $nomi[] = $item;
+            }
+        }
+
+        return array_values(array_unique(array_filter($nomi, static fn($val) => $val !== null && $val !== '')));
+    };
+
+    $nomiRestrizioni = $estraiNomi($restrizioni);
 
     // Se non è specificata un'azione, solo verifica che esistano permessi
     if ($azione == null) {
@@ -49,7 +65,10 @@ function puoiFare($datiUtente, $azione = null) {
     // Estrai i nomi dei permessi dall'array strutturato
     foreach ($permessi as $permesso) {
         if (is_array($permesso) && isset($permesso['nome']) && $permesso['nome'] === $azione) {
-            return true;
+            return !in_array($azione, $nomiRestrizioni, true);
+        }
+        if (is_string($permesso) && $permesso === $azione) {
+            return !in_array($azione, $nomiRestrizioni, true);
         }
     }
 
@@ -110,6 +129,12 @@ function puoiFare($datiUtente, $azione = null) {
 
             <?php
                 }
+                if (isset($_GET["messaggio"])){
+            ?>
+                <h3 class="alert alert-success"> <?php echo $_GET["messaggio"] ?> </h3>
+
+            <?php
+                }
             ?>
 
             <!-- ==================== SEZIONE AUTORIZZAZIONE E MOCKUP AZIONI ==================== -->
@@ -131,13 +156,16 @@ function puoiFare($datiUtente, $azione = null) {
                             <?php } ?>
                         </div>
 
-                        <?php if (puoiFare($datiUtente, 'Crea Mostri')) { ?>
-                            <div class="d-flex justify-content-center my-4">
-                                <a href="creaMostro.php" class="btn btn-success btn-lg px-4 me-2">➕ Crea Mostro</a>
-                                <a href="VisualizzaMostri.php" class="btn btn-outline-success btn-lg px-4 me-2">📋 I miei mostri</a>
-                                <a href="chat.php" class="btn btn-primary btn-lg px-4">💬 Chat</a>
-                            </div>
-                        <?php } ?>
+                        <div class="d-flex justify-content-center my-4 gap-2 flex-wrap">
+                            <?php if (puoiFare($datiUtente, 'Crea Mostri')) { ?>
+                                <a href="creaMostro.php" class="btn btn-success btn-lg px-4">➕ Crea Mostro</a>
+                                <a href="VisualizzaMostri.php" class="btn btn-outline-success btn-lg px-4">📋 I miei mostri</a>
+                            <?php } ?>
+                            <?php if (puoiFare($datiUtente, 'Crea Oggetti')) { ?>
+                                <a href="creaOggetto.php" class="btn btn-warning btn-lg px-4">🧰 Crea Oggetto</a>
+                            <?php } ?>
+                            <a href="chat.php" class="btn btn-primary btn-lg px-4">💬 Chat</a>
+                        </div>
 
                         <div class="d-flex justify-content-center my-2">
                             <a href="contactModeratore.php" class="btn btn-warning">⚠️ Contatta Moderatore</a>

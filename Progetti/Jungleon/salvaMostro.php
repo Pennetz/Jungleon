@@ -32,6 +32,17 @@ if ($vuolePubblico && !haPermesso('Pubblicazione')) {
     exit();
 }
 
+$idCreatura = (int)($_POST['idCreatura'] ?? 0);
+$tipoCreatura = strtolower(trim((string)($_POST['tipoCreatura'] ?? 'mostro')));
+$isEdit = $idCreatura > 0;
+$isBoss = $tipoCreatura === 'boss' || (isset($_POST['boss']) && (int)$_POST['boss'] === 1);
+$fase = (int)($_POST['fase'] ?? 0);
+
+if ($isBoss && $fase < 1) {
+    header('Location: creaMostro.php?errore=' . urlencode('Per creare un Boss devi inserire una fase valida'));
+    exit();
+}
+
 $payload = [
     'nome' => trim($_POST['nome'] ?? ''),
     'livello' => (int)($_POST['livello'] ?? 0),
@@ -49,10 +60,21 @@ $payload = [
     'oggettiPubblici' => array_values($_POST['oggettiPubblici'] ?? [])
 ];
 
-$apiUrl = 'http://localhost/Progetti/Jungleon/API/Mostro';
+if ($isEdit) {
+    $payload['id'] = $idCreatura;
+}
+
+if ($isBoss) {
+    $payload['fase'] = $fase;
+}
+
+$apiUrl = $isBoss
+    ? 'http://localhost/Progetti/Jungleon/API/Boss'
+    : 'http://localhost/Progetti/Jungleon/API/Mostro';
+$method = $isEdit ? 'PUT' : 'POST';
 $context = stream_context_create([
     'http' => [
-        'method' => 'POST',
+        'method' => $method,
         'header' => [
             'Content-Type: application/json',
             'Authorization: Bearer ' . ($_SESSION['token'] ?? ''),
@@ -76,7 +98,12 @@ if (!is_array($responseData)) {
 }
 
 if (!empty($responseData['data']['success'])) {
-    header('Location: VisualizzaMostri.php?messaggio=' . urlencode('Mostro creato correttamente'));
+    if ($isEdit) {
+        $msg = $isBoss ? 'Boss modificato correttamente' : 'Mostro modificato correttamente';
+    } else {
+        $msg = $isBoss ? 'Boss creato correttamente' : 'Mostro creato correttamente';
+    }
+    header('Location: VisualizzaMostri.php?messaggio=' . urlencode($msg));
     exit();
 }
 
